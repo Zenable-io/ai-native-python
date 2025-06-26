@@ -1,0 +1,44 @@
+---
+name: "Security"
+
+on:
+{%- if cookiecutter.public == 'yes' %}
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  schedule:
+    - cron: '{{ range(0, 59) | random }} {{ range(2, 4) | random }} * * *'
+{%- endif %}
+  workflow_dispatch:
+
+env:
+  python_version: "{{ cookiecutter.python_version }}"
+
+defaults:
+  run:
+    shell: 'bash --noprofile --norc -Eeuo pipefail {0}'
+
+jobs:
+  analyze:
+    name: CodeQL
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v4
+      - name: Bootstrap repository
+        uses: ./.github/actions/bootstrap
+        with:
+          token: ${{ "{{ secrets.GITHUB_TOKEN }}" }}
+          python-version: ${{ "{{ env.python_version }}" }}
+      - name: Set CodeQL Python path
+        run: |
+          echo "CODEQL_PYTHON=$(uv run which python)" | tee -a "${GITHUB_ENV}"
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          setup-python-dependencies: false
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3

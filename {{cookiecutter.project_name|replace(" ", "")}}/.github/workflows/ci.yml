@@ -1,0 +1,118 @@
+---
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+
+env:
+  python_version: "{{ cookiecutter.python_version }}"
+
+defaults:
+  run:
+    shell: 'bash --noprofile --norc -Eeuo pipefail {0}'
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v4
+      - name: Bootstrap repository
+        uses: ./.github/actions/bootstrap
+        with:
+          token: ${{ "{{ secrets.GITHUB_TOKEN }}" }}
+          python-version: ${{ "{{ env.python_version }}" }}
+      - name: Set up QEMU for cross-platform emulation
+        uses: docker/setup-qemu-action@v3
+      - name: Install license compliance tool
+        run: |
+          mkdir -p "${RUNNER_TEMP}/bin"
+          # Install grant via curl until official Docker image is available
+          # See: https://github.com/anchore/grant/issues/222
+          curl -sSfL https://raw.githubusercontent.com/anchore/grant/main/install.sh | sh -s -- -b "${RUNNER_TEMP}/bin"
+          chmod +x "${RUNNER_TEMP}/bin/grant"
+          echo "${RUNNER_TEMP}/bin" | tee -a "${GITHUB_PATH}"
+      - name: Build Docker image
+        run: task -v build
+      - name: Run tests
+        run: task -v test
+  lint:
+    name: Lint
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v4
+      - name: Bootstrap repository
+        uses: ./.github/actions/bootstrap
+        with:
+          token: ${{ "{{ secrets.GITHUB_TOKEN }}" }}
+          python-version: ${{ "{{ env.python_version }}" }}
+      - name: Run linting
+        run: task -v lint
+      - name: Validate configuration
+        run: task -v validate
+  build:
+    name: Build
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        platform:
+          - linux/amd64
+          - linux/arm64
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Bootstrap repository
+        uses: ./.github/actions/bootstrap
+        with:
+          token: ${{ "{{ secrets.GITHUB_TOKEN }}" }}
+          python-version: ${{ "{{ env.python_version }}" }}
+      - name: Set up QEMU for cross-platform emulation
+        uses: docker/setup-qemu-action@v3
+      - name: Build Docker image
+        run: task -v build
+        env:
+          PLATFORM: ${{ "{{ matrix.platform }}" }}
+      - name: Install license compliance tool
+        run: |
+          mkdir "${RUNNER_TEMP}/bin"
+          # Install grant via curl until official Docker image is available
+          # See: https://github.com/anchore/grant/issues/222
+          curl -sSfL https://raw.githubusercontent.com/anchore/grant/main/install.sh | sh -s -- -b "${RUNNER_TEMP}/bin"
+          chmod +x "${RUNNER_TEMP}/bin/grant"
+          echo "${RUNNER_TEMP}/bin" | tee -a "${GITHUB_PATH}"
+      - name: Generate SBOM
+        run: task -v sbom
+        env:
+          PLATFORM: ${{ "{{ matrix.platform }}" }}
+      - name: Set env var for unique artifact uploads
+        run: echo SANITIZED_PLATFORM="$(echo "${{ "{{ matrix.platform }}" }}" | sed 's/\//_/g')" | tee -a "${GITHUB_ENV}"
+      - name: Upload SBOM artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-${{ "{{ env.SANITIZED_PLATFORM }}" }}
+          path: |
+            sbom.*.json
+          if-no-files-found: error
+      - name: Check license compliance
+        run: task -v license-check
+        env:
+          PLATFORM: ${{ "{{ matrix.platform }}" }}
+      - name: Upload license check results
+        uses: actions/upload-artifact@v4
+        with:
+          name: license-check-${{ "{{ env.SANITIZED_PLATFORM }}" }}
+          path: license-check.*.json
+          if-no-files-found: error
+      - name: Run vulnerability scan
+        run: task -v vulnscan
+        env:
+          PLATFORM: ${{ "{{ matrix.platform }}" }}
+      - name: Upload vulnerability scan results
+        uses: actions/upload-artifact@v4
+        with:
+          name: vulns-${{ "{{ env.SANITIZED_PLATFORM }}" }}
+          path: vulns.*.json
+          if-no-files-found: error

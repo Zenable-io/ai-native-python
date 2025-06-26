@@ -1,0 +1,40 @@
+---
+name: "Update"
+
+on:
+  schedule:
+    - cron: '40 4 * * 1,4'
+  workflow_dispatch:
+
+env:
+  python_version: "3.13"
+
+defaults:
+  run:
+    shell: 'bash --noprofile --norc -Eeuo pipefail {0}'
+
+jobs:
+  update:
+    name: Update
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v4
+      - name: Bootstrap repository
+        uses: ./.github/actions/bootstrap
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          python-version: ${{ env.python_version }}
+      - name: Update the repository
+        run: task -v update
+      - name: Create or update a pull request
+        uses: peter-evans/create-pull-request@v6
+        with:
+          title: Automated update to primary components
+          commit-message: Automated update to primary components
+          committer: Zenable Automation <automation@zenable.io>
+          delete-branch: true
+          signoff: true

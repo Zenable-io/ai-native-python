@@ -1,0 +1,7 @@
+# Repository owner
+* @jonzeolla
+
+# Sensitive files (covers both the cookiecutter and generated files in the repo)
+.github/**  @jonzeolla
+LICENSE     @jonzeolla
+SECURITY.md @jonzeolla

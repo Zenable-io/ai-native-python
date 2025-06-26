@@ -1,0 +1,13 @@
+rules:
+  - pattern: "*"
+    name: "Block AGPL licenses"
+    mode: "block"
+    reason: "AGPL licenses are not allowed in this project"
+    licenses:
+      - "agpl"
+      - "agpl-1.0"
+      - "agpl-1.0-only"
+      - "agpl-1.0-or-later"
+      - "agpl-3.0"
+      - "agpl-3.0-only"
+      - "agpl-3.0-or-later"

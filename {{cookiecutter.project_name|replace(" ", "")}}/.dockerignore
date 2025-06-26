@@ -1,0 +1,8 @@
+# Ignore everything
+**
+
+# Except the bare minimum
+!pyproject.toml
+!uv.lock
+!{{ cookiecutter.project_slug }}
+!main.py

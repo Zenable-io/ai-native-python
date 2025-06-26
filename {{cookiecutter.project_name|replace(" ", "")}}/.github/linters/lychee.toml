@@ -1,0 +1,14 @@
+# This only caches external URLs
+cache = true
+max_cache_age = '1d'
+
+remap = []
+exclude = [
+{%- if cookiecutter.public != 'yes' %}
+    # Since the project is not public, we exclude the GitHub URL
+    "^https://github.com/{{ cookiecutter.github_org }}/{{ cookiecutter.project_name }}",
+{%- endif %}
+]
+exclude_path = []
+timeout = 20
+no_progress = true

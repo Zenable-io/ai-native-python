@@ -1,0 +1,51 @@
+---
+name: "Release"
+
+on:
+  workflow_dispatch:
+
+env:
+  python_version: "3.13"
+
+defaults:
+  run:
+    shell: 'bash --noprofile --norc -Eeuo pipefail {0}'
+
+jobs:
+  release:
+    name: Create Release
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+      pull-requests: write
+    outputs:
+      tag: ${{ steps.release.outputs.tag }}
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Bootstrap repository
+        uses: ./.github/actions/bootstrap
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          python-version: ${{ env.python_version }}
+
+      - name: Create release
+        id: release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Configure git
+          git config user.name "Zenable Automation"
+          git config user.email "automation@zenable.io"
+
+          # Run semantic-release (auto-determines version from conventional commits)
+          task -v release
+
+          # Get the new tag
+          TAG="$(git describe --tags --abbrev=0)"
+          echo "tag=${TAG}" | tee -a "${GITHUB_OUTPUT}"
+          echo "Created release tag: ${TAG}"

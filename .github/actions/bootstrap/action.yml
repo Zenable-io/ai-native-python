@@ -1,0 +1,85 @@
+---
+name: 'Bootstrap the repository'
+description: 'Sets up uv, adds Homebrew to PATH, installs Task, and initializes the repository'
+inputs:
+  token:
+    description: 'A Github token'
+    required: true
+  python-version:
+    description: 'Python version to use'
+    required: false
+    default: '3.13'
+  working-directory:
+    description: 'The working directory'
+    required: false
+    default: '.'
+runs:
+  using: 'composite'
+  steps:
+    - name: Create run_script for running scripts downstream
+      shell: 'bash --noprofile --norc -Eeuo pipefail {0}'
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        run_script="uv run --frozen"
+        echo "run_script=${run_script}" | tee -a "${GITHUB_ENV}"
+
+    - name: Setup uv
+      uses: astral-sh/setup-uv@v4
+      with:
+        enable-cache: true
+        cache-dependency-glob: "**/uv.lock"
+        python-version: ${{ inputs.python-version }}
+
+    - name: Install Task
+      uses: arduino/setup-task@v2
+      with:
+        # Passing a repo token reduces the likelihood of API rate limit exceeded
+        repo-token: ${{ inputs.token }}
+
+    - name: Add Homebrew to the path
+      shell: 'bash --noprofile --norc -Eeuo pipefail {0}'
+      # This ensures compatibility with macOS runners and Linux runners with Homebrew
+      run: |
+        # Check if we're on macOS
+        if [[ "$RUNNER_OS" == "macOS" ]]; then
+          # macOS homebrew locations
+          if [[ -d "/opt/homebrew/bin" ]]; then
+            PATH="${PATH}:/opt/homebrew/bin"
+          elif [[ -d "/usr/local/bin" ]]; then
+            PATH="${PATH}:/usr/local/bin"
+          fi
+        else
+          # Linux homebrew location
+          if [[ -d "/home/linuxbrew/.linuxbrew/bin" ]]; then
+            PATH="${PATH}:/home/linuxbrew/.linuxbrew/bin"
+          fi
+        fi
+
+        export PATH
+        echo "PATH=${PATH}" | tee -a "${GITHUB_ENV}"
+
+        # Smoke test - don't fail if brew isn't available
+        if command -v brew &> /dev/null; then
+          echo "Homebrew found at: $(which brew)"
+          brew --version
+        else
+          echo "Homebrew not found, continuing without it"
+        fi
+      working-directory: ${{ inputs.working-directory }}
+
+    - name: Set Python hash for caching
+      shell: 'bash --noprofile --norc -Eeuo pipefail {0}'
+      run: |
+        # Create a hash of the Python version for better cache keys
+        echo "PY=$(python -VV | sha256sum | cut -d' ' -f1)" | tee -a "${GITHUB_ENV}"
+
+    - name: Cache pre-commit environments
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/pre-commit
+        key: pre-commit|${{ env.PY }}|${{ hashFiles(format('{0}/.pre-commit-config.yaml', inputs.working-directory)) }}
+
+    - name: Initialize the repository
+      working-directory: ${{ inputs.working-directory }}
+      shell: 'bash --noprofile --norc -Eeuo pipefail {0}'
+      run: task -v init

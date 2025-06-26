@@ -1,0 +1,9 @@
+# This only caches external URLs
+cache = true
+max_cache_age = '1d'
+
+remap = []
+exclude = []
+exclude_path = []
+timeout = 20
+no_progress = true

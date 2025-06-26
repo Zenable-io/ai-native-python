@@ -1,0 +1,94 @@
+[project]
+name = "{{ cookiecutter.project_slug }}"
+version = "0.0.0"
+description = "{{ cookiecutter.project_short_description }}"
+authors = [
+    { name = "{{ cookiecutter.company_name }}", email = "Python@{{ cookiecutter.company_domain }}" }
+]
+dependencies = []
+readme = "README.md"
+requires-python = ">={{ cookiecutter.python_version }}"
+
+[project.urls]
+Homepage = "https://{{ cookiecutter.company_domain }}"
+
+[tool.uv.pip]
+universal = true
+generate-hashes = true
+require-hashes = true
+
+[[tool.uv.index]]
+name = "pypi"
+url = "https://pypi.org/simple"
+default = true
+
+[tool.isort]
+profile = "black"
+src_paths = ["{{ cookiecutter.project_slug }}", "tests"]
+
+[tool.mypy]
+plugins = []
+
+[tool.pytest.ini_options]
+addopts = "--cov={{ cookiecutter.project_slug }} --cov-append --no-cov-on-fail --cov-fail-under=0 --cov-report=html --cov-report=xml --cov-report=term-missing"
+pythonpath = ['.']
+markers = [
+    "unit: marks tests as unit tests (deselect with '-m \"not unit\"')",
+    "integration: marks tests as integration tests (deselect with '-m \"not integration\"')",
+]
+
+[tool.uv]
+managed = true
+dev-dependencies = [
+    "coverage",
+    "pre-commit",
+    "pydantic>=2.0.0",
+    "pyright",
+    "pytest",
+    "pytest-cov",
+    "pytest-mock",
+    "python-semantic-release",
+    "PyYAML>=6.0.1",
+    "refurb",
+]
+
+[tool.coverage.report]
+fail_under = 80
+
+[tool.pyright]
+include = ["{{ cookiecutter.project_slug }}", "tests"]
+exclude = ["**/__pycache__"]
+
+typeCheckingMode = "standard"
+
+[tool.semantic_release]
+version_toml = [
+    "pyproject.toml:project.version",
+]
+version_variables = [
+    "{{ cookiecutter.project_slug }}/__init__.py:__version__:nf",
+    "README.md:docker run {{ cookiecutter.github_org }}/{{ cookiecutter.project_slug }}:nf",
+]
+changelog_file = "CHANGELOG.md"
+commit_parser = "conventional"
+allow_zero_version = true
+commit_author = "{{ cookiecutter.company_name }} Automation <automation@{{ cookiecutter.company_domain }}>"
+commit_message = "chore(release): {version}"
+tag_format = "v{version}"
+
+[tool.semantic_release.branches.release]
+match = "main"
+
+[tool.semantic_release.publish]
+dist_glob_patterns = ["dist/*"]
+upload_to_vcs_release = true
+
+[tool.semantic_release.remote]
+name = "origin"
+type = "github"
+token = { env = "GH_TOKEN" }
+ignore_token_for_push = false
+insecure = false
+
+[tool.ruff]
+target-version = "py{{ cookiecutter.python_version.replace('.', '') }}"
