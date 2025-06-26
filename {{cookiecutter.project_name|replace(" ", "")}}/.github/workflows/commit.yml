@@ -1,0 +1,139 @@
+---
+name: "Commit"
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  python_version: "{{ cookiecutter.python_version }}"
+
+defaults:
+  run:
+    shell: 'bash --noprofile --norc -Eeuo pipefail {0}'
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v4
+      - name: Bootstrap repository
+        uses: ./.github/actions/bootstrap
+        with:
+          token: ${{ "{{ secrets.GITHUB_TOKEN }}" }}
+          python-version: ${{ "{{ env.python_version }}" }}
+      - name: Run pre-commit
+        run: task -v lint
+  test:
+    name: Test
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - linux/amd64
+          - linux/arm64
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Bootstrap repository
+        uses: ./.github/actions/bootstrap
+        with:
+          token: ${{ "{{ secrets.GITHUB_TOKEN }}" }}
+          python-version: ${{ "{{ env.python_version }}" }}
+      - name: Validate the repo
+        run: task -v validate
+      - name: Set up QEMU for cross-platform emulation
+        uses: docker/setup-qemu-action@v3
+      - name: Build the image(s)
+        run: task -v build
+        env:
+          PLATFORM: ${{ "{{ matrix.platform }}" }}
+      - name: Install license compliance tool
+        run: |
+          mkdir "${RUNNER_TEMP}/bin"
+          # Install grant via curl until official Docker image is available
+          # See: https://github.com/anchore/grant/issues/222
+          curl -sSfL https://raw.githubusercontent.com/anchore/grant/main/install.sh | sh -s -- -b "${RUNNER_TEMP}/bin"
+          chmod +x "${RUNNER_TEMP}/bin/grant"
+          echo "${RUNNER_TEMP}/bin" | tee -a "${GITHUB_PATH}"
+      - name: Run the tests
+        run: task -v test
+        env:
+          PLATFORM: ${{ "{{ matrix.platform }}" }}
+      - name: Generate SBOM
+        run: task -v sbom
+        env:
+          PLATFORM: ${{ "{{ matrix.platform }}" }}
+      - name: Set env var for unique artifact uploads
+        run: echo SANITIZED_PLATFORM="$(echo "${{ "{{ matrix.platform }}" }}" | sed 's/\//_/g')" | tee -a "${GITHUB_ENV}"
+      - name: Upload SBOM artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-${{ "{{ env.SANITIZED_PLATFORM }}" }}
+          path: |
+            sbom.*.json
+          if-no-files-found: error
+      - name: Check license compliance
+        run: task -v license-check
+        env:
+          PLATFORM: ${{ "{{ matrix.platform }}" }}
+      - name: Upload license check results
+        uses: actions/upload-artifact@v4
+        with:
+          name: license-check-${{ "{{ env.SANITIZED_PLATFORM }}" }}
+          path: license-check.*.json
+          if-no-files-found: error
+      - name: Run vulnerability scan
+        run: task -v vulnscan
+        env:
+          PLATFORM: ${{ "{{ matrix.platform }}" }}
+      - name: Upload vulnerability scan results
+        uses: actions/upload-artifact@v4
+        with:
+          name: vulns-${{ "{{ env.SANITIZED_PLATFORM }}" }}
+          path: vulns.*.json
+          if-no-files-found: error
+{%- if cookiecutter.dockerhub == 'yes' %}
+  publish:
+    name: Publish the container(s)
+    needs: bump-version
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - linux/amd64
+          - linux/arm64
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: "${{ "{{ needs.bump-version.outputs.tag }}" }}"
+      - name: Bootstrap repository
+        uses: ./.github/actions/bootstrap
+        with:
+          token: ${{ "{{ secrets.GITHUB_TOKEN }}" }}
+          python-version: ${{ "{{ env.python_version }}" }}
+      - name: Set up QEMU for cross-platform emulation
+        uses: docker/setup-qemu-action@v3
+      - name: Build the container
+        run: task -v build
+        env:
+          PLATFORM: ${{ "{{ matrix.platform }}" }}
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ "{{ secrets.DOCKERHUB_USERNAME }}" }}
+          password: ${{ "{{ secrets.DOCKERHUB_PAT }}" }}
+      - name: Publish the container
+        run: task -v publish
+        env:
+          PLATFORM: ${{ "{{ matrix.platform }}" }}
+{%- endif %}

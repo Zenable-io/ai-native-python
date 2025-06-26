@@ -1,0 +1,11 @@
+{%- set fragments = cookiecutter.project_slug.split('_') -%}
+{%- for item in fragments -%}
+{{ item }}
+{% endfor %}
+allstar
+dependabot
+refurb
+renovatebot
+skopeo
+syft
+zenable

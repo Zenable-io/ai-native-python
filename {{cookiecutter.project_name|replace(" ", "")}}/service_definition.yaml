@@ -1,0 +1,61 @@
+name: {{ cookiecutter.project_slug }}
+description: {{ cookiecutter.project_short_description }}
+tags: [backend]  # Example options: api, backend, frontend, worker, scheduler, gateway, proxy, cache, storage
+develop:
+  software:
+    language:
+      name: python
+      version: "{{ cookiecutter.python_version }}"
+  depends_on:  # Optional: Dependencies during development
+    infrastructure: []  # List of develop-time infrastructure dependencies
+    # Example:
+    # - name: postgres_rds
+    #   types: [sql_db]
+    #   local_runtime: compose  # Options: compose, process
+    #   version: "1.0.0"
+    service: []  # List of develop-time service dependencies
+    # Example:
+    # - name: some_service
+    #   version: "abc123..."  # Git commit hash
+publish:
+  publish_type: docker  # Options: docker, oci, archive, package, binary, none
+  depends_on:  # Optional: Dependencies for build/publication
+    infrastructure: []  # List of publish-time infrastructure dependencies
+    service: []  # List of publish-time service dependencies
+deploy:
+  deploy_type: none  # Options: sam, opentofu, cloudformation, kubernetes, helm, terraform, ansible, none
+  environments: []  # Options: development, testing, staging, production, sandbox, qa, uat, demo, dr
+  depends_on:  # Optional: Dependencies for deployment
+    infrastructure: []  # List of deploy-time infrastructure dependencies
+    service: []  # List of deploy-time service dependencies
+runtime:
+  lifecycle: alpha  # Options: transient, experimental, prototype, alpha, beta, release_candidate, ga, maintenance, deprecated, retired, pendingdeletion
+  protocols: [http, https]  # Options: http, https, ws, wss, grpc, graphql, rest, soap, amqp, mqtt
+  runtime_type: container  # Options: compose, container, serverless, lambda, function, vm, bare_metal, kubernetes, process, batch, cron, none
+  platforms: [linux/amd64, linux/arm64]  # Options: linux/amd64, linux/arm64
+  environments:  # Required: Runtime environment configurations
+    development:
+      authorization:
+        public: false
+      depends_on:
+        infrastructure: []  # No infrastructure deps for running in development
+        service: []  # No service deps for running in development
+    # Example configuration for each environment:
+    # sandbox:
+    #   authorization:
+    #     public: false
+    #     private: true
+    #     internal: false
+    #   uptime_sla: 95.0  # Optional: Service Level Agreement
+    #   uptime_slo: 99.0  # Optional: Service Level Objective
+    #   operations_schedule:  # Optional
+    #     uptime: on_demand  # Options: continuous, on_demand, scheduled
+    #     # If uptime is "scheduled", these fields are required:
+    #     # days: [Monday, Tuesday, Wednesday, Thursday, Friday]
+    #     # start: "2024-01-01T09:00:00Z"  # RFC3339 timestamp
+    #     # end: "2024-01-01T17:00:00Z"    # RFC3339 timestamp
+    #   depends_on:  # Optional: Environment-specific dependencies
+    #     infrastructure: []  # List of runtime infrastructure dependencies (i.e. what infrastructure does this need, like databases, CDNs, or API Gateways)
+    #     service: []  # List of runtime service dependencies (i.e. what service-to-service calls does this make)
+service_definition:
+  version: "0.1.0"

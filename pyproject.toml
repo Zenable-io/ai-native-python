@@ -1,0 +1,107 @@
+[project]
+name = "ai-native-python"
+version = "0.1.0"
+description = "The AI-Native python paved road generator"
+authors = [
+    { name = "Zenable", email = "Python@zenable.io" }
+]
+dependencies = []
+readme = "README.md"
+requires-python = ">= 3.13"
+
+[project.urls]
+Homepage = "https://zenable.io"
+
+[tool.uv.pip]
+universal = true
+generate-hashes = true
+require-hashes = true
+
+[[tool.uv.index]]
+name = "pypi"
+url = "https://pypi.org/simple"
+default = true
+
+[tool.isort]
+profile = "black"
+src_paths = ["ai_native_python", "tests", "hooks"]
+
+[tool.ruff]
+target-version = "py313"
+line-length = 120
+src = ["ai_native_python", "tests", "hooks"]
+
+[tool.ruff.lint]
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+    "B",  # flake8-bugbear
+    "C4", # flake8-comprehensions
+    "UP", # pyupgrade
+]
+ignore = [
+    "E501", # line too long
+    "B008", # do not perform function calls in argument defaults
+]
+
+[tool.mypy]
+plugins = []
+
+[tool.pytest.ini_options]
+addopts = "--cov=ai_native_python --cov-append --no-cov-on-fail --cov-fail-under=0 --cov-report=html --cov-report=xml --cov-report=term-missing"
+pythonpath = ['.']
+markers = [
+    "unit: marks tests as unit tests (deselect with '-m \"not unit\"')",
+    "integration: marks tests as integration tests (deselect with '-m \"not integration\"')",
+]
+
+[tool.uv]
+managed = true
+dev-dependencies = [
+    "cookiecutter",
+    "coverage",
+    "gitpython",
+    "pre-commit",
+    "pyright",
+    "pytest",
+    "pytest-cookies",
+    "pytest-cov",
+    "python-semantic-release",
+    "pyyaml",
+    "refurb",
+]
+
+[tool.coverage.report]
+fail_under = 80
+
+[tool.pyright]
+include = ["ai_native_python", "tests", "hooks"]
+exclude = ["**/__pycache__"]
+
+typeCheckingMode = "standard"
+
+[tool.semantic_release]
+version_toml = [
+    "pyproject.toml:project.version",
+]
+version_variables = [
+    "ai_native_python/__init__.py:__version__",
+]
+changelog_file = "CHANGELOG.md"
+commit_parser = "conventional"
+allow_zero_version = true
+commit_author = "Zenable Automation <automation@zenable.io>"
+commit_message = "chore(release): {version}"
+tag_format = "v{version}"
+
+[tool.semantic_release.branches.release]
+match = "main"
+
+[tool.semantic_release.remote]
+name = "origin"
+type = "github"
+token = { env = "GH_TOKEN" }
+ignore_token_for_push = false
+insecure = false

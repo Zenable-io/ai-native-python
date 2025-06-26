@@ -1,0 +1,266 @@
+---
+# https://taskfile.dev
+
+version: '3'
+
+set:
+  - nounset
+  - errexit
+  - pipefail
+
+vars:
+  IMAGE_NAME: '{{ cookiecutter.github_org }}/{{ cookiecutter.project_slug }}'
+  PROJECT_SLUG: {{ cookiecutter.project_slug }}
+  PYTHON_VERSION: {{ cookiecutter.python_version }}
+  SUPPORTED_PLATFORMS: 'linux/amd64,linux/arm64'
+  VERSION:
+    sh: uv run python -c 'from src.{{ "{{" }}.PROJECT_SLUG{{ "}}" }} import __version__; print(__version__)'
+  RUN_SCRIPT: 'uv run --frozen'
+  SCRIPTS_DIR: 'scripts'
+  LOCAL_PLATFORM:
+    sh: "{{ "{{" }}.RUN_SCRIPT{{ "}}" }} {{ "{{" }}.SCRIPTS_DIR{{ "}}" }}/get_platform.sh"
+  # Use PLATFORM if specified, otherwise use LOCAL_PLATFORM
+  PLATFORM: '{{ "{{" }}if .PLATFORM{{ "}}" }}{{ "{{" }}.PLATFORM{{ "}}" }}{{ "{{" }}else{{ "}}" }}{{ "{{" }}.LOCAL_PLATFORM{{ "}}" }}{{ "{{" }}end{{ "}}" }}'
+  # Output redirect based on CI environment
+  OUTPUT_REDIRECT: '{{ "{{" }}if eq .GITHUB_ACTIONS "true"{{ "}}" }}| tee{{ "{{" }}else{{ "}}" }}>{{ "{{" }}end{{ "}}" }}'
+
+silent: true
+
+tasks:
+  init-uv:
+    desc: Initializes the uv virtual environment
+    internal: true
+    sources:
+      - pyproject.toml
+      - uv.lock
+    preconditions:
+      - which uv
+    cmds:
+      # Sync dependencies with uv
+      - uv sync --frozen --all-extras
+
+  # init-submodules task removed - no longer using goat submodule
+
+  init-pre-commit:
+    desc: Install the pre-commit hooks
+    internal: true
+    sources:
+      - .pre-commit-config.yaml
+    status:
+      # Only install the pre-commit hooks if you are in a git repository; quote to avoid yaml intrepretering the ! as a node tag
+      # https://yaml.org/spec/1.2.2/#691-node-tags
+      - '! test -d .git'
+    cmds:
+      # Don't run this in pipelines
+      - '{{ "{{" }}if ne .GITHUB_ACTIONS "true"{{ "}}{{.RUN_SCRIPT}} pre-commit install{{else}}echo \"Detected a github actions pipeline; skipping the pre-commit install\"{{end}}" }}'
+
+  init-docker-multiplatform:
+    desc: Setup docker for multiplatform builds
+    internal: true
+    cmds:
+      # This fixes an "ERROR: Multiple platforms feature is currently not supported for docker driver" pipeline error
+      # Only create our multiplatform builder if it doesn't already exist; otherwise list information about the one that exists
+      # It suppresses the inspect output when it's not running in a GitHub Action
+      - docker buildx inspect multiplatform {{ "{{" }}if ne .GITHUB_ACTIONS "true"{{ "}}" }}>/dev/null{{ "{{end}}" }} || docker buildx create --name multiplatform --driver docker-container --use
+
+  init:
+    desc: Initialize the repo for local use; intended to be run after git clone
+    cmds:
+      - task: init-uv
+      - task: init-pre-commit
+      - task: init-docker-multiplatform
+
+  lint:
+    desc: Run the linter(s)
+    cmds:
+      - '{{ "{{.RUN_SCRIPT}}" }} pre-commit run --all-files'
+
+  validate:
+    desc: Validate the pre-commit config and hooks files
+    cmds:
+      - '{{ "{{.RUN_SCRIPT}}" }} pre-commit validate-config'
+      - '{{ "{{.RUN_SCRIPT}}" }} pre-commit validate-manifest'
+      - '{{ "{{.RUN_SCRIPT}}" }} python scripts/validate_service_definition.py'
+
+  build:
+    desc: Build the project; docker images, compiled binaries, etc.
+    vars:
+      TIMESTAMP:
+        sh: '{{ "{{" }}.RUN_SCRIPT{{ "}}" }} {{ "{{" }}.SCRIPTS_DIR{{ "}}" }}/get_rfc3339_timestamp.py'
+      EPOCH:
+        sh: '{{ "{{" }}.RUN_SCRIPT{{ "}}" }} {{ "{{" }}.SCRIPTS_DIR{{ "}}" }}/get_epoch.sh'
+      COMMIT_HASH:
+        sh: git rev-parse HEAD
+      BUILD_PLATFORM: '{{ "{{" }}if eq .PLATFORM "all"{{ "}}" }}{{ "{{" }}.SUPPORTED_PLATFORMS{{ "}}" }}{{ "{{" }}else if .PLATFORM{{ "}}" }}{{ "{{" }}.PLATFORM{{ "}}" }}{{ "{{" }}else{{ "}}" }}{{ "{{" }}.LOCAL_PLATFORM{{ "}}" }}{{ "{{" }}end{{ "}}" }}'
+      PLATFORM_SUFFIX: '{{ "{{" }}if eq .PLATFORM "all"{{ "}}" }}all{{ "{{" }}else if .PLATFORM{{ "}}" }}{{ "{{" }}.PLATFORM | replace "/" "_"{{ "}}" }}{{ "{{" }}else{{ "}}" }}{{ "{{" }}.LOCAL_PLATFORM | replace "/" "_"{{ "}}" }}{{ "{{" }}end{{ "}}" }}'
+      # We always output to "latest", since we're also overwriting latest
+      OUTPUT_FILE: '{{ "{{" }}.IMAGE_NAME | replace "/" "_"{{ "}}" }}_latest_{{ "{{" }}.PLATFORM_SUFFIX{{ "}}" }}.tar'
+      DESCRIPTION: '{{ cookiecutter.project_short_description }}'
+    cmds:
+      # First build: load if same platform, output to file if cross-platform
+      - |
+        docker buildx build \
+          --platform {{ "{{" }}.BUILD_PLATFORM{{ "}}" }} \
+          --pull \
+          {{ "{{" }}if eq .PLATFORM .LOCAL_PLATFORM{{ "}}" }}--load{{ "{{" }}else{{ "}}" }}-o type=oci,dest="{{ "{{" }}.OUTPUT_FILE{{ "}}" }}"{{ "{{" }}end{{ "}}" }} \
+          {{ "{{" }}if eq .GITHUB_ACTIONS "true"{{ "}}" }}--cache-from type=gha --cache-to type=gha,mode=max{{ "{{" }}end{{ "}}" }} \
+          --build-arg NAME="{{ "{{" }}.PROJECT_SLUG{{ "}}" }}" \
+          --build-arg DESCRIPTION="{{ "{{" }}.DESCRIPTION{{ "}}" }}" \
+          --build-arg TIMESTAMP="{{ "{{" }}.TIMESTAMP{{ "}}" }}" \
+          --build-arg COMMIT_HASH="{{ "{{" }}.COMMIT_HASH{{ "}}" }}" \
+          -t {{ "{{.IMAGE_NAME}}:{{.VERSION}}" }} \
+          -t {{ "{{.IMAGE_NAME}}:latest" }} \
+          -t {{ "{{.IMAGE_NAME}}:{{.EPOCH}}" }} \
+          .
+      # Second build: only for same platform to also output to file
+      - |
+        {{ "{{" }}if eq .PLATFORM .LOCAL_PLATFORM{{ "}}" }}
+        docker buildx build \
+          --platform {{ "{{" }}.BUILD_PLATFORM{{ "}}" }} \
+          -o type=oci,dest="{{ "{{" }}.OUTPUT_FILE{{ "}}" }}" \
+          {{ "{{" }}if eq .GITHUB_ACTIONS "true"{{ "}}" }}--cache-from type=gha{{ "{{" }}end{{ "}}" }} \
+          --build-arg NAME="{{ "{{" }}.PROJECT_SLUG{{ "}}" }}" \
+          --build-arg DESCRIPTION="{{ "{{" }}.DESCRIPTION{{ "}}" }}" \
+          --build-arg TIMESTAMP="{{ "{{" }}.TIMESTAMP{{ "}}" }}" \
+          --build-arg COMMIT_HASH="{{ "{{" }}.COMMIT_HASH{{ "}}" }}" \
+          -t {{ "{{.IMAGE_NAME}}:{{.VERSION}}" }} \
+          -t {{ "{{.IMAGE_NAME}}:latest" }} \
+          -t {{ "{{.IMAGE_NAME}}:{{.EPOCH}}" }} \
+          .
+        {{ "{{" }}end{{ "}}" }}
+      - |
+        {{ "{{" }}if and (ne .PLATFORM .LOCAL_PLATFORM) (ne .PLATFORM "all"){{ "}}" }}
+        echo >&2 "WARNING: Avoided loading {{ "{{" }}.IMAGE_NAME{{ "}}" }}:latest and {{ "{{" }}.IMAGE_NAME{{ "}}" }}:{{ "{{" }}.EPOCH{{ "}}" }} into your Docker daemon because you built a cross-platform image of {{ "{{" }}.PLATFORM{{ "}}" }}.
+        See {{ "{{" }}.OUTPUT_FILE{{ "}}" }} for the OCI artifact."
+        {{ "{{" }}end{{ "}}" }}
+
+  test:
+    desc: Run the project tests
+    deps: ["coverage-erase"]
+    cmds:
+      - task: unit-test
+      - task: integration-test
+
+  coverage-erase:
+    desc: Erase coverage
+    # This allows the task to be specified as as dep multiple times but only run once
+    run: once
+    cmds:
+      # Ensure we don't aggregate coverage from prior runs
+      - '{{ "{{.RUN_SCRIPT}}" }} coverage erase'
+
+  unit-test:
+    desc: Run the project unit tests
+    deps: ["coverage-erase"]
+    cmds:
+      - '{{ "{{.RUN_SCRIPT}}" }} pytest -m unit tests/'
+
+  integration-test:
+    desc: Run the project integration tests
+    deps: ["coverage-erase"]
+    status:
+      # Only run integration tests when the PLATFORM is set to all or the same platform as we're running on
+      - '{{ "{{" }}if or (eq .PLATFORM "all") (eq .PLATFORM .LOCAL_PLATFORM) (not .PLATFORM){{ "}}" }}exit 1{{ "{{" }}else{{ "}}" }}exit 0{{ "{{" }}end{{ "}}" }}'
+    cmds:
+      - '{{ "{{.RUN_SCRIPT}}" }} pytest -m integration tests/'
+
+  update:
+    desc: Update the project dev and runtime dependencies
+    cmds:
+      - uv lock --upgrade
+      # This can take a while but it's required for the following step to update BuildKit in the docker driver
+      - docker buildx rm multiplatform || true
+      # Because we just destroyed the "multiplatform" builder instance, this will configure a new one. The next time
+      # the host runs a `docker buildx build` it will rebuild the builder instance, updating its BuildKit
+      - task: init-docker-multiplatform
+
+  clean:
+    desc: Clean up build artifacts, cache files/directories, temp files, etc.
+    cmds:
+      - rm -rf .pytest_cache
+      - rm -rf htmlcov
+      - rm -rf .coverage
+      - rm -rf dist
+      - rm -rf build
+      - rm -rf *.egg-info
+      - rm -f sbom.*.json
+      - rm -f vulns.*.json
+      - rm -f license-check.*.json
+      - rm -f {{ cookiecutter.github_org }}_{{ cookiecutter.project_slug }}_*_*.tar
+      - find . -type d -name __pycache__ -exec rm -rf {} + || true
+      - find . -type f -name '*.pyc' -delete || true
+
+  release:
+    desc: Cut a project release
+    env:
+      GH_TOKEN:
+        sh: |
+          if [[ -n "${GH_TOKEN:-}" ]]; then
+            echo "${GH_TOKEN}"
+          elif command -v gh &> /dev/null && gh auth token &> /dev/null; then
+            gh auth token
+          fi
+    cmds:
+      # Phase 1: Update version in files without any VCS operations
+      - '{{ "{{.RUN_SCRIPT}}" }} semantic-release version --no-changelog --skip-build --no-commit --no-tag --no-push --no-vcs-release'
+      # Re-lock dependencies to update version in uv.lock
+      - uv lock
+      # Stage the updated lock file
+      - git add uv.lock
+      # Phase 2: Run full release with commits, tags, and push; this will include the updated uv.lock
+      - '{{ "{{.RUN_SCRIPT}}" }} semantic-release version --no-changelog --skip-build {{ "{{.CLI_ARGS}}" }}'
+
+  sbom:
+    desc: Generate project SBOMs
+    cmds:
+      - |
+        {{ "{{.RUN_SCRIPT}}" }} {{ "{{.SCRIPTS_DIR}}" }}/scan_image.py sbom \
+          --platform "{{ "{{.PLATFORM}}" }}" \
+          --image-name "{{ "{{.IMAGE_NAME}}" }}"
+
+  vulnscan:
+    desc: Vuln scan the SBOM
+    cmds:
+      - |
+        {{ "{{.RUN_SCRIPT}}" }} {{ "{{.SCRIPTS_DIR}}" }}/scan_image.py vulnscan \
+          --platform "{{ "{{.PLATFORM}}" }}" \
+          --image-name "{{ "{{.IMAGE_NAME}}" }}"
+
+  license-check:
+    desc: Check license compliance using grant
+    cmds:
+      - |
+        {{ "{{.RUN_SCRIPT}}" }} {{ "{{.SCRIPTS_DIR}}" }}/scan_image.py license-check \
+          --platform "{{ "{{.PLATFORM}}" }}" \
+          --image-name "{{ "{{.IMAGE_NAME}}" }}"
+
+{%- if cookiecutter.dockerhub == 'yes' %}
+
+  publish:
+    desc: Publish the project artifacts; docker images, compiled binaries, etc.
+    vars:
+      INPUT_FILE:
+        # Find the latest tar file for cross-platform builds
+        sh: '{{ "{{" }}if and (ne .LOCAL_PLATFORM .PLATFORM) (ne .PLATFORM "all"){{ "}}}" }}ls {{ "{{" }}.IMAGE_NAME | replace "/" "_"{{ "}}" }}_*_{{ "{{" }}.PLATFORM | replace "/" "_" | replace "," "_"{{ "}}" }}.tar 2>/dev/null | sort -r | head -1{{ "{{" }}end{{ "}}" }}'
+    preconditions:
+      - sh: which docker
+        msg: "docker is required for publishing"
+    cmds:
+      - |
+        {{ "{{" }}if or (eq .LOCAL_PLATFORM .PLATFORM) (eq .PLATFORM "all"){{ "}}" }}
+          docker push {{ "{{.IMAGE_NAME}}:{{.VERSION}}" }}
+          docker push {{ "{{.IMAGE_NAME}}:latest" }}
+        {{ "{{" }}else{{ "}}" }}
+          echo "Publishing cross-platform image from {{ "{{" }}.INPUT_FILE{{ "}}" }}"
+          docker run --rm \
+            -v "$(pwd):/src" \
+            -w /src \
+            quay.io/skopeo/stable:latest \
+            copy oci-archive:{{ "{{" }}.INPUT_FILE{{ "}}" }} docker://{{ "{{.IMAGE_NAME}}:{{.VERSION}}" }}
+          docker run --rm \
+            -v "$(pwd):/src" \
+            -w /src \
+            quay.io/skopeo/stable:latest \
+            copy oci-archive:{{ "{{" }}.INPUT_FILE{{ "}}" }} docker://{{ "{{.IMAGE_NAME}}:latest" }}
+        {{ "{{" }}end{{ "}}" }}
+{%- endif %}

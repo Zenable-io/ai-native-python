@@ -1,0 +1,93 @@
+---
+name: "CI"
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  schedule:
+    - cron: '47 5 * * 0'
+
+env:
+  python_version: "3.13"
+
+defaults:
+  run:
+    shell: 'bash --noprofile --norc -Eeuo pipefail {0}'
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v4
+      - name: Bootstrap repository
+        uses: ./.github/actions/bootstrap
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          python-version: ${{ env.python_version }}
+      - name: Lint
+        run: task -v lint
+  test:
+    name: Test
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v4
+        # Necessary for hooks to succeed during tests for commits/schedule
+        if: github.event_name != 'pull_request'
+        with:
+          fetch-depth: 0
+      - name: Checkout the repository
+        uses: actions/checkout@v4
+        # Necessary for hooks to succeed during tests for PRs
+        if: github.event_name == 'pull_request'
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+      - name: Bootstrap repository
+        uses: ./.github/actions/bootstrap
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          python-version: ${{ env.python_version }}
+      - name: Validate the repo
+        run: task -v validate
+      - name: Install license compliance tool
+        run: |
+          mkdir "${RUNNER_TEMP}/bin"
+          # Install grant via curl until official Docker image is available
+          # See: https://github.com/anchore/grant/issues/222
+          curl -sSfL https://raw.githubusercontent.com/anchore/grant/main/install.sh | sh -s -- -b "${RUNNER_TEMP}/bin"
+          chmod +x "${RUNNER_TEMP}/bin/grant"
+          echo "${RUNNER_TEMP}/bin" | tee -a "${GITHUB_PATH}"
+      - name: Run the tests
+        run: task -v test
+      - name: Run SBOM generation
+        run: task -v sbom
+      - name: Upload SBOM artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-files
+          path: |
+            sbom.*.json
+          if-no-files-found: error
+      - name: Check license compliance
+        run: task -v license-check
+      - name: Upload license check results
+        uses: actions/upload-artifact@v4
+        with:
+          name: license-check-results
+          path: license-check.json
+          if-no-files-found: error
+      - name: Run vulnerability scan
+        run: task -v vulnscan
+      - name: Upload vulnerability scan results
+        uses: actions/upload-artifact@v4
+        with:
+          name: vuln-scan-results
+          path: vulns.json
+          if-no-files-found: error

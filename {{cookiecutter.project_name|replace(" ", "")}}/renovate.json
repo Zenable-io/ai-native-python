@@ -1,0 +1,74 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":disableRateLimiting",
+    ":automergePr",
+    ":automergeRequireAllStatusChecks"
+  ],
+  "timezone": "America/New_York",
+  "schedule": ["after 8am and before 5pm on monday"],
+  "semanticCommits": "enabled",
+  "commitMessagePrefix": "chore(deps):",
+  "labels": ["dependencies"],
+  "assignees": ["{{ cookiecutter.project_owner_github_username }}"],
+  "reviewers": ["{{ cookiecutter.project_owner_github_username }}"],
+  "prConcurrentLimit": 10,
+  "prCreation": "immediate",
+  "rangeStrategy": "bump",
+  "lockFileMaintenance": {
+    "enabled": true,
+    "schedule": ["before 8am on monday"]
+  },
+  "packageRules": [
+    {
+      "description": "Automerge non-major updates",
+      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
+      "automerge": true
+    },
+    {
+      "description": "Group Python dev dependencies",
+      "matchDepTypes": ["devDependencies"],
+      "matchManagers": ["pip_requirements", "pep621"],
+      "groupName": "python dev dependencies"
+    },
+    {
+      "description": "Group pre-commit hook updates",
+      "matchManagers": ["pre-commit"],
+      "groupName": "pre-commit hooks"
+    },
+    {
+      "description": "Disable updates for local/private packages",
+      "matchPackagePatterns": ["^{{ cookiecutter.project_slug }}$"],
+      "enabled": false
+    }
+  ],
+  "pre-commit": {
+    "enabled": true
+  },
+  "python": {
+    "addManagePyAutoReplace": false
+  },
+  "regexManagers": [
+    {
+      "description": "Update Python version in GitHub Actions",
+      "fileMatch": ["^\\.github/workflows/.*\\.ya?ml$"],
+      "matchStrings": [
+        "python-version:\\s*['\"]?(?<currentValue>\\d+\\.\\d+(?:\\.\\d+)?)['\"]?"
+      ],
+      "datasourceTemplate": "github-tags",
+      "depNameTemplate": "python/cpython",
+      "extractVersionTemplate": "^v(?<version>.*)$"
+    },
+    {
+      "description": "Update uv version references",
+      "fileMatch": ["^\\.github/workflows/.*\\.ya?ml$", "^Taskfile\\.yml$"],
+      "matchStrings": [
+        "uv-version:\\s*['\"]?(?<currentValue>[^'\"\\s]+)['\"]?",
+        "UV_VERSION:\\s*['\"]?(?<currentValue>[^'\"\\s]+)['\"]?"
+      ],
+      "datasourceTemplate": "github-releases",
+      "depNameTemplate": "astral-sh/uv"
+    }
+  ]
+}

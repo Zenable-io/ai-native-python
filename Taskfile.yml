@@ -1,0 +1,166 @@
+---
+# https://taskfile.dev
+
+version: '3'
+
+set:
+  - nounset
+  - errexit
+  - pipefail
+
+vars:
+  PROJECT_SLUG: ai_native_python
+  INPUT_EXCLUDE: .*\{\{.*\}\}.*
+  PYTHON_VERSION: 3.13
+  VERSION:
+    sh: uv run python -c 'from {{.PROJECT_SLUG}} import __version__; print(__version__)'
+  RUN_SCRIPT: 'uv run --frozen'
+
+silent: true
+
+tasks:
+  init-uv:
+    desc: Initializes the uv virtual environment
+    internal: true
+    sources:
+      - pyproject.toml
+      - uv.lock
+    cmds:
+      - uv sync --frozen
+
+  init-pre-commit:
+    desc: Install the pre-commit hooks
+    internal: true
+    sources:
+      - .pre-commit-config.yaml
+    status:
+      # Don't install the pre-commit hooks if you aren't in a git repository; quote to avoid yaml intrepretering the ! as a node tag
+      # https://yaml.org/spec/1.2.2/#691-node-tags
+      - '! test -d .git'
+    cmds:
+      # Don't run this in pipelines
+      - '{{if ne .GITHUB_ACTIONS "true"}}{{.RUN_SCRIPT}} pre-commit install{{else}}echo "Detected a github actions pipeline; skipping the pre-commit install"{{end}}'
+
+  init-docker-multiplatform:
+    desc: Setup docker for multiplatform builds
+    internal: true
+    cmds:
+      # This fixes an "ERROR: Multiple platforms feature is currently not supported for docker driver" pipeline error
+      # Only create our multiplatform builder if it doesn't already exist; otherwise list information about the one that exists
+      # It suppresses the inspect output when it's not running in a GitHub Action
+      - docker buildx inspect multiplatform {{if ne .GITHUB_ACTIONS "true"}}>/dev/null{{end}} || docker buildx create --name multiplatform --driver docker-container --use
+
+  init:
+    desc: Initialize the repo for local use; intended to be run after git clone
+    cmds:
+      - task: init-uv
+      - task: init-pre-commit
+      - task: init-docker-multiplatform
+
+  lint:
+    desc: Run the linter(s)
+    cmds:
+      - '{{.RUN_SCRIPT}} pre-commit run --all-files'
+
+  validate:
+    desc: Validate the pre-commit config
+    cmds:
+      - '{{.RUN_SCRIPT}} pre-commit validate-config'
+
+  test:
+    desc: Run the project tests
+    cmds:
+      - task: unit-test
+      - task: integration-test
+
+  unit-test:
+    desc: Run the unit tests
+    cmds:
+      - '{{.RUN_SCRIPT}} pytest --keep-baked-projects -m unit tests/'
+
+  integration-test:
+    desc: Run the integration tests
+    cmds:
+      - '{{.RUN_SCRIPT}} pytest --keep-baked-projects -m integration tests/'
+
+  update:
+    desc: Update the project dev and runtime dependencies
+    cmds:
+      # This currently assumes uv was installed via uv; we will want to make it more flexible in the future
+      - brew upgrade uv
+      - pre-commit autoupdate --freeze --jobs 4
+      # Copy the newly updated config into the project template, excluding the exclude line
+      - cat .pre-commit-config.yaml | grep -v ^exclude > '{{`{{cookiecutter.project_name|replace(" ", "")}}`}}/.pre-commit-config.yaml'
+      - uv lock --upgrade
+      # This can take a while but it's required for the following step to update BuildKit in the docker driver
+      - '{{if eq .CLI_ARGS "all"}}docker buildx rm multiplatform || true{{end}}'
+      # If we just destroyed the "multiplatform" builder instance, this will configure a new one. The next time the host runs a `docker buildx build` it will
+      # rebuild the builder instance, updating its BuildKit. There's no harm in running this even if we didn't do the `docker buildx rm` previously
+      - task: init-docker-multiplatform
+
+  clean:
+    desc: Clean up build artifacts, cache files/directories, temp files, etc.
+    cmds:
+      - rm -rf .pytest_cache
+      - rm -rf htmlcov
+      - rm -rf .coverage
+      - rm -rf dist
+      - rm -rf build
+      - rm -rf *.egg-info
+      - rm -f sbom.*.json
+      - rm -f vulns.*.json
+      - rm -f license-check.json
+      - find . -type d -name __pycache__ -exec rm -rf {} + || true
+      - find . -type d -name .mypy_cache -exec rm -rf {} + || true
+      - find . -type d -name .ruff_cache -exec rm -rf {} + || true
+      - find . -type f -name '*.pyc' -delete || true
+
+  release:
+    desc: Cut a project release
+    env:
+      GH_TOKEN:
+        sh: |
+          if [[ -n "${GH_TOKEN:-}" ]]; then
+            echo "${GH_TOKEN}"
+          elif command -v gh &> /dev/null && gh auth token &> /dev/null; then
+            gh auth token
+          fi
+    cmds:
+      # Phase 1: Update version in files without any VCS operations
+      - '{{.RUN_SCRIPT}} semantic-release version --no-changelog --skip-build --no-commit --no-tag --no-push --no-vcs-release'
+      # Re-lock dependencies to update version in uv.lock
+      - uv lock
+      # Stage the updated lock file
+      - git add uv.lock
+      # Phase 2: Run full release with commits, tags, and push
+      - '{{.RUN_SCRIPT}} semantic-release version --no-changelog --skip-build {{.CLI_ARGS}}'
+
+  sbom:
+    desc: Generate project SBOMs
+    cmds:
+      - |
+        docker run --rm \
+          -v "${PWD}:/src" \
+          -w /src \
+          anchore/syft:latest \
+          /src \
+          -o syft-json=sbom.syft.json \
+          -o spdx-json=sbom.spdx.json \
+          -o cyclonedx-json=sbom.cyclonedx.json
+
+  vulnscan:
+    desc: Vuln scan the SBOM
+    cmds:
+      - |
+        docker run --rm \
+          -v "${PWD}:/src" \
+          -w /src \
+          anchore/grype:latest \
+          sbom:sbom.syft.json \
+          -o json \
+          | tee vulns.json
+
+  license-check:
+    desc: Check license compliance using grant
+    cmds:
+      - grant check sbom.spdx.json --config .github/.grant.yml -o json | tee license-check.json

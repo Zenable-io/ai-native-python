@@ -1,0 +1,7 @@
+# Ignore everything
+**
+
+# Except the bare minimum
+!pyproject.toml
+!uv.lock
+!src/**

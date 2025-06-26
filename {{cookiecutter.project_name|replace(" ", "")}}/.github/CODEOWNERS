@@ -1,0 +1,9 @@
+# Repository owner
+* @{{ cookiecutter.project_owner_github_username }}
+
+# GitHub automation oversight
+.github/** @{{ cookiecutter.project_owner_github_username }}
+
+# Sensitive files
+LICENSE @{{ cookiecutter.project_owner_github_username }}
+SECURITY.md @{{ cookiecutter.project_owner_github_username }}

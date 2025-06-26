@@ -1,0 +1,9 @@
+allstar
+cookiecutter
+dependabot
+digestabot
+refurb
+skopeo
+syft
+zenable
+zizmor
