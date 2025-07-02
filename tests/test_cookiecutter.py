@@ -219,7 +219,7 @@ def test_default_project(cookies):
         for platform in ("linux/arm64", "linux/amd64"):
             env["PLATFORM"] = platform
             subprocess.run(
-                ["task", "-v", "build", "test", "sbom", "vulnscan"],
+                ["task", "-v", "build", "test", "sbom", "vulnscan", "license-check"],
                 capture_output=True,
                 check=True,
                 cwd=project,
@@ -266,7 +266,7 @@ def test_default_project(cookies):
                 f"Unexpected exit code when running {command}; expected {expected_exit}, received {process.returncode}"
             )
 
-        # Clean the repo, perform a multi-platform build, and then run the sbom and vulnscan task to ensure it all works
+        # Clean the repo, perform a multi-platform build, and then run the sbom / vulnscan / license check tasks to ensure it all works
         # We cannot functionally test a multi-platform image without pushing it to a registry and then pulling it back down because they can't directly be
         # loaded into the docker daemon
         env["PLATFORM"] = "all"
@@ -278,6 +278,7 @@ def test_default_project(cookies):
                 "build",
                 "sbom",
                 "vulnscan",
+                "license-check",
             ],
             capture_output=True,
             check=True,

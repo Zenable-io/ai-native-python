@@ -206,11 +206,11 @@ def test_multi_platform_build():
             env=env,
         )
 
-        # Test SBOM generation for specific platforms
+        # Test SBOM generation, vuln scanning, and license checks for each supported platforms
         for platform in ["linux/amd64", "linux/arm64"]:
             env["PLATFORM"] = platform
             subprocess.run(
-                ["task", "-v", "sbom", "vulnscan"],
+                ["task", "-v", "sbom", "vulnscan", "license-check"],
                 capture_output=True,
                 check=True,
                 cwd=project_root,
