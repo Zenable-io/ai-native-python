@@ -130,9 +130,9 @@ jobs:
       # Keep this aligned with the above needs
       - name: Check for failed jobs
         run: |
-          if [[ "{% raw %}${{ needs.lint.result }}{% endraw %}" == "failure" ||
-                "{% raw %}${{ needs.test.result }}{% endraw %}" == "failure" ||
-                "{% raw %}${{ needs.build.result }}{% endraw %}" == "failure" ]]; then
+          # Use contains() to check for any failure or cancellation
+          if [[ "{% raw %}${{ contains(needs.*.result, 'failure') }}{% endraw %}" == "true" || 
+                "{% raw %}${{ contains(needs.*.result, 'cancelled') }}{% endraw %}" == "true" ]]; then
             echo "One or more required jobs failed. Marking finalizer as failed."
             exit 1
           fi
