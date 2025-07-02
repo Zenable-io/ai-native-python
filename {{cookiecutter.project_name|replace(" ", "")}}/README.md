@@ -1,6 +1,6 @@
 # {{ cookiecutter.project_name }}
 
-[![CI](https://github.com/{{ cookiecutter.github_org }}/{{ cookiecutter.project_name }}/actions/workflows/ci.yml/badge.svg)](https://github.com/{{ cookiecutter.github_org }}/{{ cookiecutter.project_name }}/actions/workflows/ci.yml)
+[![CI](https://github.com/{{ cookiecutter.github_org }}/{{ cookiecutter.project_name }}/actions/workflows/commit.yml/badge.svg)](https://github.com/{{ cookiecutter.github_org }}/{{ cookiecutter.project_name }}/actions/workflows/commit.yml)
 
 Welcome to {{ cookiecutter.project_name }}
 
