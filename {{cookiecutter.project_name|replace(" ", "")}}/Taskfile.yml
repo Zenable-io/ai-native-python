@@ -167,10 +167,6 @@ tasks:
   update:
     desc: Update the project dev and runtime dependencies
     cmds:
-
-    sh: "{{ "{{" }}.RUN_SCRIPT{{ "}}" }} {{ "{{" }}.SCRIPTS_DIR{{ "}}" }}/get_platform.sh"
-
-
       # This currently assumes uv was installed via uv (locally); we will want to make it more flexible in the future
       - '{{ "{{" }}if ne .GITHUB_ACTIONS "true"{{ "}}" }}brew upgrade uv{{ "{{" }}end{{ "}}" }}'
       - pre-commit autoupdate --freeze --jobs 4
