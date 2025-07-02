@@ -100,14 +100,14 @@ jobs:
     runs-on: ubuntu-24.04
     # Keep this aligned with the below steps
     needs: [lint, test]
-    if: always()  # Ensure it runs even if "needs" fail
+    if: always()  # Ensure it runs even if "needs" fails or is cancelled
     steps:
       # Keep this aligned with the above needs
       - name: Check for failed jobs
         run: |
-          if [[ "${{ needs.lint.result }}" == "failure" ||
-                "${{ needs.test.result }}" == "failure" ]]; then
-            echo "One or more required jobs failed. Marking finalizer as failed."
+          if [[ "${{ contains(needs.*.result, 'failure') }}" == "true" ||
+                "${{ contains(needs.*.result, 'cancelled') }}" == "true" ]]; then
+            echo "One or more required jobs failed or was cancelled. Marking finalizer as failed."
             exit 1
           fi
       - name: Finalize
