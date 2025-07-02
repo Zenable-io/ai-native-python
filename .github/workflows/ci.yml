@@ -1,6 +1,9 @@
 ---
 name: "CI"
 
+permissions:
+  contents: read
+
 on:
   push:
     branches:
@@ -35,6 +38,8 @@ jobs:
   test:
     name: Test
     runs-on: ubuntu-24.04
+    permissions:
+      contents: write
     steps:
       - name: Checkout the repository
         uses: actions/checkout@v4
@@ -91,3 +96,23 @@ jobs:
           name: vuln-scan-results
           path: vulns.json
           if-no-files-found: error
+  finalizer:
+    # This gives us something to set as required in the repo settings. Some projects use dynamic fan-outs using matrix strategies and the fromJSON function, so
+    # you can't hard-code what _should_ run vs not. Having a finalizer simplifies that so you can just check that the finalizer succeeded, and if so, your
+    # requirements have been met
+    # Example: https://x.com/JonZeolla/status/1877344137713766516
+    name: Finalize the pipeline
+    runs-on: ubuntu-24.04
+    # Keep this aligned with the above jobs
+    needs: [lint, test]
+    if: always()  # Ensure it runs even if "needs" fails or is cancelled
+    steps:
+      - name: Check for failed or cancelled jobs
+        run: |
+          if [[ "${{ contains(needs.*.result, 'failure') }}" == "true" ||
+                "${{ contains(needs.*.result, 'cancelled') }}" == "true" ]]; then
+            echo "One or more required jobs failed or was cancelled. Marking finalizer as failed."
+            exit 1
+          fi
+      - name: Finalize
+        run: echo "Pipeline complete!"
