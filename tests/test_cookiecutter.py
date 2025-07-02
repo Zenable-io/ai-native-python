@@ -191,11 +191,10 @@ def test_default_project(cookies):
         pytest.fail("Something went wrong with the project's post-generation hook")
 
     try:
-        # Build all supported architectures to ensure it succeeds; we cannot test it because multi-platform builds can't be loaded into the docker daemon, but
-        # we will load and test the same-platform image later
         env = os.environ.copy()
         env.pop("VIRTUAL_ENV", None)  # Clean VIRTUAL_ENV to avoid conflicts
-        env["PLATFORM"] = "all"
+
+        # Bootstrap the project and run the simplest checks first to optimize for a fast feedback loop
         subprocess.run(
             [
                 "task",
@@ -203,9 +202,6 @@ def test_default_project(cookies):
                 "init",
                 "lint",
                 "validate",
-                "build",
-                "sbom",
-                "vulnscan",
             ],
             capture_output=True,
             check=True,
@@ -213,7 +209,13 @@ def test_default_project(cookies):
             env=env,
         )
 
-        # Build and test each supported architecture individually (should be mostly cached)
+        # Ensure the project.yml is generated, and is valid YAML
+        config_path = project / ".github" / "project.yml"
+        with config_path.open(encoding="utf-8") as yaml_data:
+            project_context = yaml.safe_load(yaml_data)
+            assert project_context["origin"]["generated"]
+
+        # Build and test each supported architecture individually
         for platform in ("linux/arm64", "linux/amd64"):
             env["PLATFORM"] = platform
             subprocess.run(
@@ -264,11 +266,24 @@ def test_default_project(cookies):
                 f"Unexpected exit code when running {command}; expected {expected_exit}, received {process.returncode}"
             )
 
-        # Ensure the project.yml is generated, and is valid YAML
-        config_path = project / ".github" / "project.yml"
-        with config_path.open(encoding="utf-8") as yaml_data:
-            project_context = yaml.safe_load(yaml_data)
-            assert project_context["origin"]["generated"]
+        # Clean the repo, perform a multi-platform build, and then run the sbom and vulnscan task to ensure it all works
+        # We cannot functionally test a multi-platform image without pushing it to a registry and then pulling it back down because they can't directly be
+        # loaded into the docker daemon
+        env["PLATFORM"] = "all"
+        subprocess.run(
+            [
+                "task",
+                "-v",
+                "clean",
+                "build",
+                "sbom",
+                "vulnscan",
+            ],
+            capture_output=True,
+            check=True,
+            cwd=project,
+            env=env,
+        )
     except subprocess.CalledProcessError as error:
         print(f"\n=== STDOUT ===\n{error.stdout.decode('utf-8')}")
         print(f"\n=== STDERR ===\n{error.stderr.decode('utf-8')}")
