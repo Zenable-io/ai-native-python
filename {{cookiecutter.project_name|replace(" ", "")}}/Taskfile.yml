@@ -167,11 +167,14 @@ tasks:
   update:
     desc: Update the project dev and runtime dependencies
     cmds:
+      # This currently assumes uv was installed via uv (locally); we will want to make it more flexible in the future
+      - '{{if ne .GITHUB_ACTIONS "true"}}brew upgrade uv{{end}}'
+      - pre-commit autoupdate --freeze --jobs 4
       - uv lock --upgrade
       # This can take a while but it's required for the following step to update BuildKit in the docker driver
-      - docker buildx rm multiplatform || true
-      # Because we just destroyed the "multiplatform" builder instance, this will configure a new one. The next time
-      # the host runs a `docker buildx build` it will rebuild the builder instance, updating its BuildKit
+      - '{{if eq .CLI_ARGS "all"}}docker buildx rm multiplatform || true{{end}}'
+      # If we just destroyed the "multiplatform" builder instance, this will configure a new one. The next time the host runs a `docker buildx build` it will
+      # rebuild the builder instance, updating its BuildKit. There's no harm in running this even if we didn't do the `docker buildx rm` previously
       - task: init-docker-multiplatform
 
   clean:
