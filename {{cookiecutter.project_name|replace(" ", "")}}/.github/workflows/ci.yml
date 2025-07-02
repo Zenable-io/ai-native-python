@@ -1,6 +1,10 @@
 ---
 name: CI
 
+permissions:
+  contents: read
+  actions: write
+
 on:
   pull_request:
     branches: [main]
@@ -123,17 +127,16 @@ jobs:
     # Example: https://x.com/JonZeolla/status/1877344137713766516
     name: Finalize the pipeline
     runs-on: ubuntu-24.04
-    # Keep this aligned with the below steps
+    # Keep this aligned with the above jobs
     needs: [lint, test, build]
-    if: always()  # Ensure it runs even if "needs" fail
+    if: always()  # Ensure it runs even if "needs" fails or is cancelled
     steps:
-      # Keep this aligned with the above needs
-      - name: Check for failed jobs
+      - name: Check for failed or cancelled jobs
         run: |
           # Use contains() to check for any failure or cancellation
-          if [[ "{% raw %}${{ contains(needs.*.result, 'failure') }}{% endraw %}" == "true" || 
+          if [[ "{% raw %}${{ contains(needs.*.result, 'failure') }}{% endraw %}" == "true" ||
                 "{% raw %}${{ contains(needs.*.result, 'cancelled') }}{% endraw %}" == "true" ]]; then
-            echo "One or more required jobs failed. Marking finalizer as failed."
+            echo "One or more required jobs failed or was cancelled. Marking finalizer as failed."
             exit 1
           fi
       - name: Finalize

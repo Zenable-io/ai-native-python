@@ -1,6 +1,10 @@
 ---
 name: "CI"
 
+permissions:
+  contents: read
+  actions: write
+
 on:
   push:
     branches:
@@ -98,12 +102,11 @@ jobs:
     # Example: https://x.com/JonZeolla/status/1877344137713766516
     name: Finalize the pipeline
     runs-on: ubuntu-24.04
-    # Keep this aligned with the below steps
+    # Keep this aligned with the above jobs
     needs: [lint, test]
     if: always()  # Ensure it runs even if "needs" fails or is cancelled
     steps:
-      # Keep this aligned with the above needs
-      - name: Check for failed jobs
+      - name: Check for failed or cancelled jobs
         run: |
           if [[ "${{ contains(needs.*.result, 'failure') }}" == "true" ||
                 "${{ contains(needs.*.result, 'cancelled') }}" == "true" ]]; then
