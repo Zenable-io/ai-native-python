@@ -1,6 +1,6 @@
 # AI-Native Python
 
-+[![CI](https://github.com/zenable-io/ai-native-python/actions/workflows/ci.yml/badge.svg)](https://github.com/zenable-io/ai-native-python/actions/workflows/ci.yml)
+[![CI](https://github.com/zenable-io/ai-native-python/actions/workflows/ci.yml/badge.svg)](https://github.com/zenable-io/ai-native-python/actions/workflows/ci.yml)
 
 Give your vibe coding the perfect starting point with this paved-road repo generator so Cursor (or any AI) can learn by example—no verbose prompts needed.
 
