@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Test cookiecutter-python
+Test ai-native-python
 """
 
 import copy
@@ -109,7 +109,7 @@ def check_files(files):
 )
 def test_supported_options(cookies, context_override):
     """
-    Test all supported cookiecutter-python answer combinations
+    Test all supported answer combinations
     """
     # Turn off the post generation hooks
     os.environ["RUN_POST_HOOK"] = "false"
@@ -127,9 +127,46 @@ def test_supported_options(cookies, context_override):
 
 
 @pytest.mark.integration
+def test_update(cookies):
+    """
+    Test task update
+    """
+    # Turn on the post generation hooks but skip git push
+    os.environ["RUN_POST_HOOK"] = "true"
+    os.environ["SKIP_GIT_PUSH"] = "true"
+
+    result = cookies.bake()
+    project = result.project_path
+
+    try:
+        # First init the project just in case
+        # Clean environment to avoid VIRTUAL_ENV conflicts
+        env = os.environ.copy()
+        env.pop("VIRTUAL_ENV", None)
+        subprocess.run(
+            ["task", "init"],
+            capture_output=True,
+            check=True,
+            cwd=project,
+            env=env,
+        )
+
+        # And then run a task update
+        subprocess.run(
+            ["task", "update"],
+            capture_output=True,
+            check=True,
+            cwd=project,
+            env=env,
+        )
+    except subprocess.CalledProcessError as error:
+        pytest.fail(f"stdout: {error.stdout.decode('utf-8')}, stderr: {error.stderr.decode('utf-8')}")
+
+
+@pytest.mark.integration
 def test_autofix_hook(cookies, context):
     """
-    Test the post-generation pre-commit autofix hook of cookiecutter-python
+    Test the post-generation pre-commit autofix hook
     """
     # Turn on the post generation hooks but skip git push
     os.environ["RUN_POST_HOOK"] = "true"
@@ -177,7 +214,7 @@ def test_autofix_hook(cookies, context):
 @pytest.mark.integration
 def test_default_project(cookies):
     """
-    Test a default cookiecutter-python project thoroughly
+    Test a default project thoroughly
     """
     # Turn on the post generation hooks but skip git push
     os.environ["RUN_POST_HOOK"] = "true"
