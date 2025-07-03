@@ -49,3 +49,5 @@ Both tools are pre-configured and will start working once the repository is push
 ## FAQs
 
 For frequently asked questions including release workflow troubleshooting, see our [FAQ documentation](./FAQ.md).
+
+_This project was generated with 🤟 by [Zenable](https://zenable.io)_
