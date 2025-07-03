@@ -145,7 +145,7 @@ def run_post_gen_hook():
         write_context(context=context)
 
         # Generate a fully up-to-date lock file
-        subprocess.run(["uv", "lock", "--upgrade"], check=True, capture_output=True, text=True)
+        subprocess.run(["uv", "lock", "--upgrade"], check=True, capture_output=True)
         subprocess.run(["git", "add", "-A"], capture_output=True, check=True)
 
         # This constructs a git remote using the prompt answers
@@ -181,6 +181,10 @@ def run_post_gen_hook():
                 capture_output=True,
                 check=True,
             )
+
+        # Run the initial setup step automatically so pre-commit hooks, etc. are pre-installed. However, if it fails, don't fail the overall repo generation
+        # (i.e. check=False)
+        subprocess.run(["task", "init"], check=False, capture_output=True)
     except subprocess.CalledProcessError as error:
         stdout = error.stdout.decode("utf-8") if error.stdout else "No stdout"
         stderr = error.stderr.decode("utf-8") if error.stderr else "No stderr"
