@@ -29,15 +29,16 @@ tasks:
       - uv sync --frozen
 
   init-pre-commit:
-    desc: Install the pre-commit hooks
+    desc: Setup pre-commit
     internal: true
     sources:
       - .pre-commit-config.yaml
     status:
-      # Don't install the pre-commit hooks if you aren't in a git repository; quote to avoid yaml intrepretering the ! as a node tag
+      # Don't do any of this if you aren't in a git repository; quote to avoid yaml intrepretering the ! as a node tag
       # https://yaml.org/spec/1.2.2/#691-node-tags
       - '! test -d .git'
     cmds:
+      - uv tool install pre-commit
       # Don't run this in pipelines
       - '{{if ne .GITHUB_ACTIONS "true"}}{{.RUN_SCRIPT}} pre-commit install{{else}}echo "Detected a github actions pipeline; skipping the pre-commit install"{{end}}'
 
@@ -88,6 +89,7 @@ tasks:
     cmds:
       # This currently assumes uv was installed via uv (locally); we will want to make it more flexible in the future
       - '{{if ne .GITHUB_ACTIONS "true"}}brew upgrade uv{{end}}'
+      - uv tool upgrade --all
       - pre-commit autoupdate --freeze --jobs 4
       # Copy the newly updated config into the project template, excluding the exclude line
       - cat .pre-commit-config.yaml | grep -v ^exclude > '{{`{{cookiecutter.project_name|replace(" ", "")}}`}}/.pre-commit-config.yaml'
