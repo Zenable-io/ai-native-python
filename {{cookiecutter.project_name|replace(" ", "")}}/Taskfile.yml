@@ -174,7 +174,7 @@ tasks:
       - pre-commit autoupdate --freeze --jobs 4
       - uv lock --upgrade
       # This can take a while but it's required for the following step to update BuildKit in the docker driver
-      - '{{ "{{" }}if eq .CLI_ARGS "all"{{ "}}" }}docker buildx rm multiplatform || true{{ "}}" }}end {{ "}}" }}'
+      - '{{ "{{" }}if eq .CLI_ARGS "all"{{ "}}" }}docker buildx rm multiplatform || true{{ "{{" }}end{{ "}}" }}'
       # If we just destroyed the "multiplatform" builder instance, this will configure a new one. The next time the host runs a `docker buildx build` it will
       # rebuild the builder instance, updating its BuildKit. There's no harm in running this even if we didn't do the `docker buildx rm` previously
       - task: init-docker-multiplatform
