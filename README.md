@@ -1,53 +1,56 @@
-# AI-Native Python
+<p align="center"><img src="img/ai-native-python.png" width="100px"/></p>
+<div align="center"><h1>AI-Native Python</h1></div>
 
-[![CI](https://github.com/zenable-io/ai-native-python/actions/workflows/ci.yml/badge.svg)](https://github.com/zenable-io/ai-native-python/actions/workflows/ci.yml)
+AI-Native Python sets you on a paved road of automated guardrails, where each commit is instantly checked for security, quality, and compliance.
 
-Give your vibe coding the perfect starting point with this paved-road repo generator so Cursor (or any AI) can learn by example—no verbose prompts needed.
+It works seamlessly with GitHub Copilot, Cursor, Claude, Windsurf, and other leading AI coding agents to route their output through fully instrumented pipelines
+of tests, security scans, and release automation.
+
+Make your tools meet every requirement on the first pass, letting you ship faster without loosening safety or standards.
 
 ## Features
 
-- 🚀 Modern Python development with `uv`
-- 🧪 Automated testing with `pytest`
-- 🔍 Code quality checks with `pre-commit` hooks (`ruff`, `pyright`, etc.)
-- 🔐 Security scanning with SBOM generation (`syft`), vulnerability scanning (`grype`), and license checks (`grant`)
-- 🤖 Automated dependency updates with Dependabot and Renovate
-- 📦 Multi-platform Docker builds
+- 🚀 Modern, lightning fast Python development with `uv`
+- 🧪 Automated testing with `pytest` with 100% coverage
+- 🔍 Code quality checks on every commit with `pre-commit`
+- 🔐 Security scanning with SBOM generation, vulnerability scanning, and license checks
+- 🤖 Never think about upstream vulnerabilities again with **automated dependency upgrades**
+- 📦 Ensure usability across all major platforms with multi-platform Docker builds
 - 🔄 Automated versioning and releasing with `python-semantic-release`
 
-For FAQs including release workflow troubleshooting, see our [FAQ documentation](./FAQ.md).
+For FAQs including release workflow troubleshooting, see our [FAQ documentation](./FAQ.md)
 
 ## Getting Started
 
-Create an empty remote Git repository that aligns with name of the project you'd like to create. Once it exists, you can continue.
+1. Create an [empty GitHub repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/creating-a-new-repository)
+1. Generate a project with the same name as the repo you just made:
 
-```bash
-# Install the prerequisites
-brew install uv
+    ```bash
+    # Install the prerequisites
+    brew install uv
 
-# Initialize your project
-uvx --with gitpython cookiecutter gh:zenable-io/ai-native-python
-```
+    # Initialize your project
+    uvx --with gitpython cookiecutter gh:zenable-io/ai-native-python
+    ```
 
-If you'd like to use SSH instead of HTTPS, use this command instead:
+1. Review your newly populated GitHub repository 🎉
 
-```bash
-uvx --with gitpython cookiecutter git+ssh://git@github.com/zenable-io/ai-native-python.git
-```
+## Next Steps
 
-This will push the initial commit and run a release of your project; ensure that this succeeds before adding business logic to ensure you have a solid
-foundation.
+Now that you've generated the initial repository you can configure any required repository settings such as rulesets/branch protections. This can be done via
+Infrastructure as Code (IaC) or manually, but ostensibly by this point your repository is aligned with your organizational practices and you're ready to start
+adding features.
 
-Then, configure any required repository settings such as rulesets/branch protections. This can be done via Infrastructure as Code (IaC) or manually, but
-ostensibly by this point your repository is aligned with your organizational practices and you're ready to start adding features.
+> [!TIP]
+> Consider a tool like OpenSSF [allstar](https://github.com/ossf/allstar) to monitor these settings automatically.
 
-Consider a tool like OpenSSF [allstar](https://github.com/ossf/allstar) to monitor and alert or mitigate on your behalf.
+### Adding a feature
+
+To make a change to the project, just replace the `NotImplementedError` placeholder and you're all set!
 
 ```bash
 # Enter the project directory
 cd $(ls -td * | head -1)
-
-# Initialize the repository
-task init
 
 # Checkout a new branch for your initial content
 git checkout -b initial-content
@@ -56,10 +59,12 @@ git checkout -b initial-content
 grep -r NotImplementedError *
 ```
 
-## Optional setup
+### Optional setup
 
 If you'd like to support license file checking locally, you will need to install `grant` and put it in your `PATH`
 
-## Version Control System support
+Additionally, if you'd like to use SSH instead of HTTPS to connect to the `ai-native-python` project, use this command instead:
 
-Currently this project only supports projects hosted on GitHub.
+```bash
+uvx --with gitpython cookiecutter git+ssh://git@github.com/zenable-io/ai-native-python.git
+```
