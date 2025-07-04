@@ -14,6 +14,9 @@ on:
 {%- endif %}
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 env:
   python_version: "{{ cookiecutter.python_version }}"
 
