@@ -1,5 +1,11 @@
 # Frequently Asked Questions
 
+## Version Control System support
+
+### Q: Do you support version control platforms other than GitHub?
+
+**A:** Currently this project only supports projects hosted on GitHub.
+
 ## Release Workflow Issues
 
 ### Q: Why is my release workflow failing with permission errors?
@@ -42,13 +48,15 @@ Ensure your commits follow the format:
 
 ### Q: Can I manually specify the version number?
 
-**A:** No, the workflow is designed to automatically determine the version based on conventional commits. This ensures consistent versioning across all projects. If you need a specific version, ensure your commits indicate the appropriate change level.
+**A:** No, the workflow is designed to automatically determine the version based on conventional commits. This ensures consistent versioning across all
+projects. If you need a specific version, ensure your commits indicate the appropriate change level.
 
 ## Project Generation Issues
 
 ### Q: Why does project generation fail during the release step?
 
 **A:** The post-generation hook attempts to create an initial release. This requires:
+
 1. GitHub CLI (`gh`) to be installed and authenticated
 2. A valid GitHub token with repository write permissions
 3. The repository to exist on GitHub
@@ -56,20 +64,25 @@ Ensure your commits follow the format:
 To skip the automatic release during local testing, you have two options:
 
 1. **Recommended**: Run the hook but skip only the git push:
+
 ```bash
 export SKIP_GIT_PUSH=true
 ```
+
 This allows the post-generation hook to set up your project correctly while avoiding push failures.
 
 2. **Not recommended**: Skip the entire post-generation hook:
+
 ```bash
 export RUN_POST_HOOK=false
 ```
+
 ⚠️ This will skip important setup steps like git initialization, dependency locking, and project configuration.
 
 ### Q: Why does the post-generation hook fail to push to main?
 
-**A:** If your repository has branch protection rules that prevent direct pushes to main from local development, the post-generation hook will fail when trying to push the initial commit.
+**A:** If your repository has branch protection rules that prevent direct pushes to main from local development, the post-generation hook will fail when trying
+to push the initial commit.
 
 #### Solution:
 
