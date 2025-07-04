@@ -4,6 +4,9 @@ name: "Security"
 on:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 env:
   python_version: "3.13"
 
