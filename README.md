@@ -1,8 +1,6 @@
 <p align="center"><img src="img/ai-native-python.png" width="100px"/></p>
 <div align="center"><h1>AI-Native Python</h1></div>
 
-[![CI](https://github.com/zenable-io/ai-native-python/actions/workflows/ci.yml/badge.svg)](https://github.com/zenable-io/ai-native-python/actions/workflows/ci.yml)
-
 AI-Native Python sets you on a paved road of automated guardrails, where each commit is instantly checked for security, quality, and compliance.
 
 It works seamlessly with GitHub Copilot, Cursor, Claude, Windsurf, and other leading AI coding agents to route their output through fully instrumented pipelines
