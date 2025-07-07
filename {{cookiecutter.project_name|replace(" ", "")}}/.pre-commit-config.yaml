@@ -23,7 +23,7 @@ repos:
     - id: end-of-file-fixer
     - id: trailing-whitespace
  - repo: https://github.com/lycheeverse/lychee
-   rev: 6a471a42cc28d8bfe29502436688705cff3a471f  # frozen: nightly
+   rev: 92a9bca23f7a16124315d49f5b5e334311e29356  # frozen: nightly
    hooks:
      - id: lychee-docker
        # Keep all other configs in the config file
