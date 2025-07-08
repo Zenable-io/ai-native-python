@@ -17,7 +17,6 @@ jobs:
     runs-on: ubuntu-24.04
     permissions:
       contents: write
-      pull-requests: write
     outputs:
       tag: ${{ "{{ steps.release.outputs.tag }}" }}
     steps:
@@ -25,7 +24,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          token: ${{ "{{ secrets.GITHUB_TOKEN }}" }}
+          persist-credentials: 'false'
 
       - name: Bootstrap repository
         uses: ./.github/actions/bootstrap
