@@ -48,3 +48,41 @@ jobs:
           TAG=$(git describe --tags --abbrev=0)
           echo "tag=${TAG}" | tee -a "${GITHUB_OUTPUT}"
           echo "Created release tag: ${TAG}"
+{%- if cookiecutter.dockerhub == 'yes' %}
+
+  publish-docker:
+    name: Publish Docker Image
+    needs: release
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ "{{ needs.release.outputs.tag }}" }}
+          persist-credentials: 'false'
+
+      - name: Bootstrap repository
+        uses: ./.github/actions/bootstrap
+        with:
+          token: ${{ "{{ secrets.GITHUB_TOKEN }}" }}
+          python-version: ${{ "{{ env.python_version }}" }}
+
+      - name: Set up QEMU for cross-platform emulation
+        uses: docker/setup-qemu-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ "{{ secrets.DOCKERHUB_USERNAME }}" }}
+          password: ${{ "{{ secrets.DOCKERHUB_PAT }}" }}
+
+      - name: Build and publish multiplatform Docker image
+        run: |
+          # Extract version from tag (remove 'v' prefix if present)
+          VERSION="${{ "{{ needs.release.outputs.tag }}" }}"
+          VERSION="${VERSION#v}"
+
+          # Build and push multiplatform image
+          task -v publish VERSION="${VERSION}" PLATFORM=all
+{%- endif %}
