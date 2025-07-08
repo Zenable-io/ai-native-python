@@ -26,6 +26,7 @@ jobs:
         with:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
+          persist-credentials: 'false'
 
       - name: Bootstrap repository
         uses: ./.github/actions/bootstrap

@@ -20,6 +20,8 @@ jobs:
     steps:
       - name: Checkout the repository
         uses: actions/checkout@v4
+        with:
+          persist-credentials: 'false'
       - name: Bootstrap repository
         uses: ./.github/actions/bootstrap
         with:
@@ -41,6 +43,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          persist-credentials: 'false'
       - name: Bootstrap repository
         uses: ./.github/actions/bootstrap
         with:
@@ -116,6 +119,7 @@ jobs:
         with:
           fetch-depth: 0
           ref: "${{ "{{ needs.bump-version.outputs.tag }}" }}"
+          persist-credentials: 'false'
       - name: Bootstrap repository
         uses: ./.github/actions/bootstrap
         with:
