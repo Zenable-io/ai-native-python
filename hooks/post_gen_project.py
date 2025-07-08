@@ -90,10 +90,10 @@ def get_context() -> dict:
             # Store the fully qualified template path for local templates
             template_location = str(template_path)
         except (git.exc.InvalidGitRepositoryError, git.exc.NoSuchPathError):
-            # Not a git repository, fall back to empty values
+            # Not a git repository, fall back to unknown values
             branch = "unknown"
             dirty = False
-            template_commit_hash = ""
+            template_commit_hash = "unknown"
             template_location = str(template_path)
 
     context: dict[str, str | dict[str, str | bool | dict[str, str | bool | dict[str, str]]]] = {}
