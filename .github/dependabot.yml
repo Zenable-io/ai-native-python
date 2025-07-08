@@ -49,7 +49,7 @@ updates:
 
   # Enable version updates for Docker
   - package-ecosystem: "docker"
-    directory: "/"
+    directory: '/{{cookiecutter.project_name|replace(" ", "")}}/'
     schedule:
       interval: "weekly"
       day: "monday"
