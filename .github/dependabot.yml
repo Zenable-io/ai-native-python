@@ -49,7 +49,10 @@ updates:
 
   # Enable version updates for Docker
   - package-ecosystem: "docker"
-    directory: '/{{cookiecutter.project_name|replace(" ", "")}}/'
+    directories:
+      # We need to use directories in order to get wildcard support, otherwise we have a mess with trying to escape the {{}} for the template
+      # Related: https://docs.github.com/en/code-security/dependabot/working-with-dependabot/dependabot-options-reference#directories-or-directory--
+      - '/**/*'
     schedule:
       interval: "weekly"
       day: "monday"
