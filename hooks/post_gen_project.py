@@ -7,6 +7,7 @@ import datetime
 import json
 import os
 import pprint
+import shutil
 import subprocess
 import sys
 from collections import OrderedDict
@@ -212,16 +213,25 @@ def run_post_gen_hook():
                 check=True,
             )
 
-            # If the user didn't set ALLOW_FORCE_PUSH to true, and the project already existed, it should have failed when it previously attempted to push, so
-            # we will never get to this step
-            #
-            # Cleanup the v0.1.0 tag if it already exists, so the following release will succeed and repoint the tag if it's this is a regeneration
-            subprocess.run(
-                ["git", "push", "--delete", "origin", "v0.1.0"],
-                check=False,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-            )
+            if os.environ.get("ALLOW_FORCE_PUSH") == "true":
+                # Attempt to cleanup the v0.1.0 tag and corresponding release
+                release = "v0.1.0"
+
+                subprocess.run(
+                    ["git", "push", "--delete", "origin", release],
+                    check=False,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                )
+
+                # If the user has the gh cli installed and setup, we cleanup the corresponding release as well
+                if shutil.which("gh"):
+                    subprocess.run(
+                        ["gh", "release", "delete", release, "--yes"],
+                        check=False,
+                        stdout=subprocess.DEVNULL,
+                        stderr=subprocess.DEVNULL,
+                    )
 
             # Cut an initial release
             subprocess.run(
