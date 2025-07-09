@@ -69,7 +69,7 @@ def get_context() -> dict:
 
         # For remote templates, get the commit hash from the remote
         template_commit_hash = git.cmd.Git().ls_remote(template_repo, branch)[:40]
-        # Store the expanded URL
+        # Store the expanded URL as the template location
         template_location = template_repo
     else:
         # This is a local template path
