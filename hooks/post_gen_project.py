@@ -7,6 +7,7 @@ import datetime
 import json
 import os
 import pprint
+import shutil
 import subprocess
 import sys
 from collections import OrderedDict
@@ -200,12 +201,37 @@ def run_post_gen_hook():
         )
 
         if os.environ.get("SKIP_GIT_PUSH") != "true":
-            # TODO: Remove --force; just for testing
+            cmd = ["git", "push", "--set-upstream", "origin", "main"]
+
+            # We only force push if we were explicitly allowed to
+            if os.environ.get("ALLOW_FORCE_PUSH") == "true":
+                cmd.append("--force")
+
             subprocess.run(
-                ["git", "push", "--set-upstream", "origin", "main", "--force"],
+                cmd,
                 capture_output=True,
                 check=True,
             )
+
+            if os.environ.get("ALLOW_FORCE_PUSH") == "true":
+                # Attempt to cleanup the v0.1.0 tag and corresponding release
+                release = "v0.1.0"
+
+                subprocess.run(
+                    ["git", "push", "--delete", "origin", release],
+                    check=False,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                )
+
+                # If the user has the gh cli installed and setup, we cleanup the corresponding release as well
+                if shutil.which("gh"):
+                    subprocess.run(
+                        ["gh", "release", "delete", release, "--yes"],
+                        check=False,
+                        stdout=subprocess.DEVNULL,
+                        stderr=subprocess.DEVNULL,
+                    )
 
             # Cut an initial release
             subprocess.run(
