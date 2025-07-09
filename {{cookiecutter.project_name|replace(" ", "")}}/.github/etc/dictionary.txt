@@ -1,4 +1,10 @@
-{%- set fragments = cookiecutter.project_slug.split('_') -%}
+{%- set fragments = cookiecutter.project_name.split('_')
+                  + cookiecutter.project_slug.split('_')
+                  + cookiecutter.project_short_description.split(' ')
+                  + cookiecutter.company_name.split('_')
+                  + cookiecutter.company_domain.split('_')
+                  + cookiecutter.github_org.split('_')
+                  + cookiecutter.project_owner_github_username.split('_') -%}
 {%- for item in fragments -%}
 {{ item }}
 {% endfor %}
