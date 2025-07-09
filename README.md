@@ -10,11 +10,12 @@ Make your tools meet every requirement on the first pass, letting you ship faste
 
 ## Features
 
+- 🤖 Well-established and tested AI tooling rulesets/instructions
 - 🚀 Modern, lightning fast Python development with `uv`
 - 🧪 Automated testing with `pytest` with 100% coverage
 - 🔍 Code quality checks on every commit with `pre-commit`
 - 🔐 Security scanning with SBOM generation, vulnerability scanning, and license checks
-- 🤖 Never think about upstream vulnerabilities again with **automated dependency upgrades**
+- ⚙️ Never think about upstream vulnerabilities again with **automated dependency upgrades**
 - 📦 Ensure usability across all major platforms with multi-platform Docker builds
 - 🔄 Automated versioning and releasing with `python-semantic-release`
 
