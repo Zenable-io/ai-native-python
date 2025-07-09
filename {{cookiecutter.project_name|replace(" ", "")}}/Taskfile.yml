@@ -9,7 +9,7 @@ set:
   - pipefail
 
 vars:
-  IMAGE_NAME: '{{ cookiecutter.github_org }}/{{ cookiecutter.project_slug }}'
+  IMAGE_NAME: '{{ cookiecutter.github_org }}/{{ cookiecutter.project_name | lower }}'
   PROJECT_SLUG: {{ cookiecutter.project_slug }}
   PYTHON_VERSION: {{ cookiecutter.python_version }}
   SUPPORTED_PLATFORMS: 'linux/amd64,linux/arm64'
