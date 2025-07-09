@@ -31,7 +31,6 @@ PROJECT_CONTEXT = Path(".github/project.yml")
 
 def get_context() -> dict:
     """Return the context as a dict"""
-    # Import git-related modules here so they're only loaded when needed
     import git
     from cookiecutter.repository import expand_abbreviations
 
