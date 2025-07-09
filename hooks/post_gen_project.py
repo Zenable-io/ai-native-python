@@ -200,12 +200,21 @@ def run_post_gen_hook():
         )
 
         if os.environ.get("SKIP_GIT_PUSH") != "true":
+            cmd = ["git", "push", "--set-upstream", "origin", "main"]
+
+            # We only force push if we were explicitly allowed to
+            if os.environ.get("ALLOW_FORCE_PUSH") == "true":
+                cmd.append("--force")
+
             subprocess.run(
-                ["git", "push", "--set-upstream", "origin", "main", "--force"],
+                cmd,
                 capture_output=True,
                 check=True,
             )
 
+            # If the user didn't set ALLOW_FORCE_PUSH to true, and the project already existed, it should have failed when it previously attempted to push, so
+            # we will never get to this step
+            #
             # Cleanup the v0.1.0 tag if it already exists, so the following release will succeed and repoint the tag if it's this is a regeneration
             subprocess.run(
                 ["git", "push", "--delete", "origin", "v0.1.0"],
