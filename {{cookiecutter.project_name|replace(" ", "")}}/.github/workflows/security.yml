@@ -16,6 +16,7 @@ on:
 
 permissions:
   contents: read
+  security-events: write
 
 env:
   python_version: "{{ cookiecutter.python_version }}"
