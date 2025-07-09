@@ -1,7 +1,9 @@
 {%- set fragments = cookiecutter.project_name.split('_')
+                  + cookiecutter.project_name.split('-')
                   + cookiecutter.project_slug.split('_')
                   + cookiecutter.project_short_description.split(' ')
                   + cookiecutter.company_name.split('_')
+                  + cookiecutter.company_name.split(' ')
                   + cookiecutter.company_domain.split('_')
                   + cookiecutter.github_org.split('_')
                   + cookiecutter.project_owner_github_username.split('_') -%}
