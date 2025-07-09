@@ -113,15 +113,6 @@ def get_context() -> dict:
     # Filter out unwanted cookiecutter context
     del cookiecutter_context["_output_dir"]
 
-    # Replace relative paths with fully qualified paths in cookiecutter context
-    if "_template" in cookiecutter_context:
-        cookiecutter_context["_template"] = template_location
-
-    if "_repo_dir" in cookiecutter_context:
-        # For local templates, _repo_dir should be the same as the resolved template path
-        # For remote templates, it would be the cloned directory, but we'll use the template location
-        cookiecutter_context["_repo_dir"] = template_location
-
     return context
 
 
