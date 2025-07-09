@@ -200,11 +200,18 @@ def run_post_gen_hook():
         )
 
         if os.environ.get("SKIP_GIT_PUSH") != "true":
-            # TODO: Remove --force; just for testing
             subprocess.run(
                 ["git", "push", "--set-upstream", "origin", "main", "--force"],
                 capture_output=True,
                 check=True,
+            )
+
+            # Cleanup the v0.1.0 tag if it already exists, so the following release will succeed and repoint the tag if it's this is a regeneration
+            subprocess.run(
+                ["git", "push", "--delete", "origin", "v0.1.0"],
+                check=False,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
             )
 
             # Cut an initial release
