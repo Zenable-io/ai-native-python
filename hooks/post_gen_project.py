@@ -121,6 +121,24 @@ def write_context(*, context: dict) -> None:
         yaml.dump(context, file)
 
 
+def notify_dockerhub_secrets() -> None:
+    """Notify user about required Docker Hub secrets for releases."""
+    print("\n" + "=" * 70)
+    print("IMPORTANT: Docker Hub Publishing Enabled")
+    print("=" * 70)
+    print("\nYou have enabled Docker Hub publishing for releases.")
+    print("Please ensure the following GitHub secrets are configured:")
+    print("\n  • DOCKERHUB_USERNAME - Your Docker Hub username")
+    print("  • DOCKERHUB_PAT - Your Docker Hub Personal Access Token")
+    print("\nWithout these secrets, your releases will fail during the")
+    print("Docker image publishing step.")
+    print("\nTo add these secrets:")
+    print("1. Go to your GitHub repository settings")
+    print("2. Navigate to Settings → Secrets and variables → Actions")
+    print("3. Add the required secrets")
+    print("=" * 70 + "\n")
+
+
 def run_post_gen_hook():
     """Run post generation hook"""
     try:
@@ -199,6 +217,10 @@ def run_post_gen_hook():
         # Run the initial setup step automatically so pre-commit hooks, etc. are pre-installed. However, if it fails, don't fail the overall repo generation
         # (i.e. check=False)
         subprocess.run(["task", "init"], check=False, capture_output=True)
+
+        # Notify about Docker Hub secrets if Docker Hub publishing is enabled
+        if cookiecutter_context.get("dockerhub") == "yes":
+            notify_dockerhub_secrets()
     except subprocess.CalledProcessError as error:
         stdout = error.stdout.decode("utf-8") if error.stdout else "No stdout"
         stderr = error.stderr.decode("utf-8") if error.stderr else "No stderr"
