@@ -86,6 +86,7 @@ tasks:
   build:
     desc: Build the project; docker images, compiled binaries, etc.
     vars:
+      PUBLISH: '{{ '{{.PUBLISH | default "false"}}' }}'
       TIMESTAMP:
         sh: '{{ '{{.RUN_SCRIPT}}' }} {{ '{{.SCRIPTS_DIR}}' }}/get_rfc3339_timestamp.py'
       EPOCH:
@@ -98,12 +99,12 @@ tasks:
       OUTPUT_FILE: '{{ '{{.IMAGE_NAME | replace "/" "_"}}' }}_latest_{{ '{{.PLATFORM_SUFFIX}}' }}.tar'
       DESCRIPTION: '{{ cookiecutter.project_short_description }}'
     cmds:
-      # First build: load if same platform, output to file if cross-platform
+      # First build: load if same platform, output to file if cross-platform, or push if PUBLISH is true
       - |
         docker buildx build \
           --platform {{ '{{.BUILD_PLATFORM}}' }} \
           --pull \
-          {{ '{{if eq .PLATFORM .LOCAL_PLATFORM}}' }}--load{{ '{{else}}' }}-o type=oci,dest="{{ '{{.OUTPUT_FILE}}' }}"{{ '{{end}}' }} \
+          {{ '{{if eq .PUBLISH "true"}}' }}--push{{ "{{else if eq .PLATFORM .LOCAL_PLATFORM}}" }}--load{{ "{{else}}" }}-o type=oci,dest="{{ '{{.OUTPUT_FILE}}' }}"{{ "{{end}}" }} \
           {{ '{{if eq .GITHUB_ACTIONS "true"}}' }}--cache-from type=gha --cache-to type=gha,mode=max{{ '{{end}}' }} \
           --build-arg NAME="{{ '{{.PROJECT_SLUG}}' }}" \
           --build-arg DESCRIPTION="{{ '{{.DESCRIPTION}}' }}" \
@@ -243,29 +244,16 @@ tasks:
 
   publish:
     desc: Publish the project artifacts; docker images, compiled binaries, etc.
-    vars:
-      INPUT_FILE:
-        # Find the latest tar file for cross-platform builds
-        sh: '{{ '{{if and (ne .LOCAL_PLATFORM .PLATFORM) (ne .PLATFORM "all")}}' }}ls {{ '{{.IMAGE_NAME | replace "/" "_"}}' }}_*_{{ '{{.PLATFORM | replace "/" "_" | replace "," "_"}}' }}.tar 2>/dev/null | sort -r | head -1{{ '{{end}}' }}'
-    preconditions:
-      - sh: which docker
-        msg: "docker is required for publishing"
+    requires:
+      vars:
+        - VERSION
     cmds:
-      - |
-        {{ '{{if or (eq .LOCAL_PLATFORM .PLATFORM) (eq .PLATFORM "all")}}' }}
-          docker push {{ '{{.IMAGE_NAME}}:{{.VERSION}}' }}
-          docker push {{ '{{.IMAGE_NAME}}:latest' }}
-        {{ '{{else}}' }}
-          echo "Publishing cross-platform image from {{ '{{.INPUT_FILE}}' }}"
-          docker run --rm \
-            -v "$(pwd):/src" \
-            -w /src \
-            quay.io/skopeo/stable:latest \
-            copy oci-archive:{{ '{{.INPUT_FILE}}' }} docker://{{ '{{.IMAGE_NAME}}:{{.VERSION}}' }}
-          docker run --rm \
-            -v "$(pwd):/src" \
-            -w /src \
-            quay.io/skopeo/stable:latest \
-            copy oci-archive:{{ '{{.INPUT_FILE}}' }} docker://{{ '{{.IMAGE_NAME}}:latest' }}
-        {{ '{{end}}' }}
+      - task: build
+        vars:
+          PUBLISH: 'true'
+          VERSION: '{{ '{{.VERSION}}' }}'
+          PLATFORM: '{{ '{{.PLATFORM | default "all"}}' }}'
+          DOCKER_BUILDX_CUSTOM_ARGS: '{{ '{{.DOCKER_BUILDX_CUSTOM_ARGS | default ""}}' }}'
+          DOCKER_BUILDX_CUSTOM_TAGS: '{{ '{{.DOCKER_BUILDX_CUSTOM_TAGS | default ""}}' }}'
+          DOCKER_BUILDX_CUSTOM_CONTEXT: '{{ '{{.DOCKER_BUILDX_CUSTOM_CONTEXT}}' }}'
 {%- endif %}
