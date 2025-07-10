@@ -6,7 +6,7 @@ repos:
    hooks:
      - id: ruff-check
        types_or: [ python, pyi, jupyter ]
-       args: [ --fix, -v ]
+       args: [ --fix ]
      - id: ruff-format
        types_or: [ python, pyi, jupyter ]
  - repo: https://github.com/pre-commit/pre-commit-hooks
@@ -24,7 +24,7 @@ repos:
     - id: end-of-file-fixer
     - id: trailing-whitespace
  - repo: https://github.com/lycheeverse/lychee
-   rev: 92a9bca23f7a16124315d49f5b5e334311e29356  # frozen: nightly
+   rev: 696a7cafc842c2c7728a3808b5ac5666bb3b652c  # frozen: nightly
    hooks:
      - id: lychee-docker
        # Keep all other configs in the config file

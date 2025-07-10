@@ -122,13 +122,31 @@ def write_context(*, context: dict) -> None:
         yaml.dump(context, file)
 
 
+def populate_envrc() -> None:
+    """Create and populate the .envrc file with API key."""
+    envrc_path = Path(".envrc")
+    zenable_api_key = os.environ.get("ZENABLE_API_KEY")
+
+    if zenable_api_key:
+        envrc_path.write_text(f'export API_KEY="{zenable_api_key}"\n')
+    else:
+        envrc_path.write_text('export API_KEY="<YOUR_ZENABLE_API_KEY>"\n')
+
+    # Restrict permissions to read-only, by the owner/current user
+    envrc_path.chmod(0o600)
+
+
 def notify_envrc() -> None:
+    zenable_api_key = os.environ.get("ZENABLE_API_KEY")
     print("\n" + "=" * 70)
     print("NOTE: Environment Configuration")
     print("=" * 70)
     print("\nA .envrc file has been created in your project directory")
     print("To use services that require API keys, update the .envrc file with your keys")
     print("The .envrc file has already been added to your .gitignore")
+    print("=" * 70 + "\n")
+    if zenable_api_key:
+        print("Your ZENABLE_API_KEY has been automatically populated from the environment")
     print("=" * 70 + "\n")
 
 
@@ -251,8 +269,7 @@ def run_post_gen_hook():
             )
 
         # Create .envrc file with API key template
-        envrc_path = Path(".envrc")
-        envrc_path.write_text('export API_KEY="<YOUR_ZENABLE_API_KEY>"\n')
+        populate_envrc()
 
         # Run the initial setup step automatically so pre-commit hooks, etc. are pre-installed. However, if it fails, don't fail the overall repo generation
         # (i.e. check=False)
