@@ -10,7 +10,7 @@ These instructions are always relevant:
 
 - **Name**: {{ cookiecutter.project_name }}
 - **Package**: {{ cookiecutter.project_slug }}
-- **Description**: {{ cookiecutter.project_short_description }}
+- **Description**: {{ cookiecutter.project_short_description | replace('"', '\\"') | replace("'", "\\\\'") }}
 - **Organization**: {{ cookiecutter.company_name }} ({{ cookiecutter.company_domain }})
 - **Python Version**: {{ cookiecutter.python_version }}+
 
