@@ -40,8 +40,10 @@ tasks:
       - uv sync --frozen --all-extras
 
   init-direnv:
-    desc: Sets up direnv
+    desc: Sets up direnv locally
     internal: true
+    status:
+      - '{{ '{{if eq .GITHUB_ACTIONS "true"}}exit 0{{end}}' }}'
     cmds:
       - task: brew-install
         vars:
