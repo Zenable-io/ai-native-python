@@ -35,6 +35,9 @@ For FAQs including release workflow troubleshooting, see our [FAQ documentation]
     uvx --with gitpython cookiecutter gh:zenable-io/ai-native-python
     ```
 
+> [!NOTE]
+> Check out our video walkthrough [here](https://www.youtube.com/watch?v=YzlLchW-wtg)
+
 ## Next Steps
 
 Now that you've generated the initial repository you can configure any required repository settings such as rulesets/branch protections. This can be done via
