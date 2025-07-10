@@ -18,7 +18,7 @@ task init
 task build
 
 # Run the image
-docker run {{ cookiecutter.github_org }}/{{ cookiecutter.project_slug }}:0.0.0 --help
+docker run {{ cookiecutter.github_org }}/{{ cookiecutter.project_name }}:0.0.0 --help
 ```
 
 If you'd like to build all of the supported docker images, you can set the `PLATFORM` env var to `all` like this:
