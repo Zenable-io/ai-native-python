@@ -105,7 +105,7 @@ tasks:
       PLATFORM_SUFFIX: '{{ '{{if eq .PLATFORM "all"}}' }}all{{ '{{else if .PLATFORM}}' }}{{ '{{.PLATFORM | replace "/" "_"}}' }}{{ '{{else}}' }}{{ '{{.LOCAL_PLATFORM | replace "/" "_"}}' }}{{ '{{end}}' }}'
       # We always output to "latest", since we're also overwriting latest
       OUTPUT_FILE: '{{ '{{.IMAGE_NAME | replace "/" "_"}}' }}_latest_{{ '{{.PLATFORM_SUFFIX}}' }}.tar'
-      DESCRIPTION: "{{ cookiecutter.project_short_description | replace('"', '\\"') | replace("'", "\\'") }}"
+      DESCRIPTION: "{{ cookiecutter.project_short_description | replace('"', '\\"') | replace("'", "\\\\'") }}"
     cmds:
       # First build: load if same platform, output to file if cross-platform, or push if PUBLISH is true
       - |
