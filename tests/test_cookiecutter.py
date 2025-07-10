@@ -273,7 +273,8 @@ def test_default_project(cookies):
                 env=env,
             )
 
-        default_image = "zenable-io/todo:latest"
+        # It's important that this has -s in the name to test the docker hub image name sanitization
+        default_image = "zenable-io/replace-me:latest"
 
         # Ensure that --help exits 0
         subprocess.run(

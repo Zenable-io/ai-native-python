@@ -1,7 +1,7 @@
 {
-  "project_name": "TODO",
+  "project_name": "replace-me",
   "project_slug": "{{ cookiecutter.project_name.lower().replace(' ', '_').replace('-', '_') }}",
-  "project_short_description": "TODO",
+  "project_short_description": "A brief description of the project",
   "company_name": "Zenable Inc",
   "company_domain": "zenable.io",
   "github_org": "zenable-io",
