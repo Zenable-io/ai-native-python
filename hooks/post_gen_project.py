@@ -132,6 +132,9 @@ def populate_envrc() -> None:
     else:
         envrc_path.write_text('export API_KEY="<YOUR_ZENABLE_API_KEY>"\n')
 
+    # Restrict permissions to read-only, by the owner/current user
+    envrc_path.chmod(0o600)
+
 
 def notify_envrc() -> None:
     zenable_api_key = os.environ.get("ZENABLE_API_KEY")
