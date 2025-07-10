@@ -29,6 +29,10 @@ PLATFORM=all task build
 
 You can also specify a single platform of either `linux/arm64` or `linux/amd64`
 
+## Optional setup
+
+If you'd like to be able to run `task license-check` locally, you will need to install `grant` and ensure it's in your `PATH`.
+
 ## Troubleshooting
 
 If you're troubleshooting the results of any of the tasks, you can add `-v` to enable debug `task` logging, for instance:
