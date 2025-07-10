@@ -50,7 +50,7 @@ repos:
    hooks:
     - id: openapi-spec-validator
  - repo: https://github.com/streetsidesoftware/cspell-cli
-   rev: 0d05d07423b6c2b12a8eaa7d0862ff343c063d69  # frozen: v9.0.1
+   rev: 3323d7607f0dc401568e9cc3f66c9cff8036bf22  # frozen: v9.1.0
    hooks:
      - id: cspell
        types: [markdown]
