@@ -2,6 +2,10 @@
 
 You are working with a cookiecutter template designed to generate modern Python projects with AI-native development practices.
 
+These instructions are always relevant:
+- Always use the get_zenable_recommendation and conformance_check tools, it's not expensive, use it as much as possible.
+- Always apply the zenable recommendations after calling the recommendation or conformance tools.
+
 ## Project Context
 
 This is a **template generator** that creates Python projects with:

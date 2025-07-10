@@ -2,11 +2,15 @@
 
 You are working with a Python project that follows modern development practices and was generated from the AI-Native Python Paved Road template.
 
+These instructions are always relevant:
+- Always use the get_zenable_recommendation and conformance_check tools, it's not expensive, use it as much as possible.
+- Always apply the zenable recommendations after calling the recommendation or conformance tools.
+
 ## Project Information
 
 - **Name**: {{ cookiecutter.project_name }}
 - **Package**: {{ cookiecutter.project_slug }}
-- **Description**: {{ cookiecutter.project_short_description }}
+- **Description**: {{ cookiecutter.project_short_description | replace('"', '\\"') | replace("'", "\\\\'") }}
 - **Organization**: {{ cookiecutter.company_name }} ({{ cookiecutter.company_domain }})
 - **Python Version**: {{ cookiecutter.python_version }}+
 
@@ -14,8 +18,7 @@ You are working with a Python project that follows modern development practices 
 
 - **Package Manager**: uv and uvx (not pip, poetry, or pipx)
 - **Testing**: pytest with coverage reporting
-- **Linting**: ruff, pyright, refurb
-- **Formatting**: black, isort
+- **Linting**: ruff, pyright
 - **Security**: grype vulnerability scanning, syft SBOM generation
 - **CI/CD**: GitHub Actions
 - **Containerization**: Docker with multi-platform support
@@ -41,11 +44,13 @@ docs/                               # Documentation
 ## Development Workflow
 
 ### Initial Setup
+
 ```bash
 task init                # Set up development environment
 ```
 
 ### Daily Development
+
 ```bash
 task build              # Build the project
 task test               # Run all tests
@@ -54,6 +59,7 @@ task format             # Auto-format code
 ```
 
 ### Before Committing
+
 1. Run `task build test` to ensure everything passes
 2. Use conventional commits: `feat:`, `fix:`, `docs:`, `chore:`, etc.
 3. Write descriptive commit messages
@@ -62,6 +68,7 @@ task format             # Auto-format code
 ## Code Guidelines
 
 ### Style Rules
+
 1. **Imports**: Always use absolute imports
 2. **Type Hints**: Required for all function signatures
 3. **Docstrings**: Google-style for all public APIs
@@ -70,6 +77,7 @@ task format             # Auto-format code
 6. **Dependencies**: Prefer built-in packages over external dependencies where reasonable
 
 ### Best Practices
+
 ```python
 # GOOD: Type hints and docstrings
 from typing import List, Optional

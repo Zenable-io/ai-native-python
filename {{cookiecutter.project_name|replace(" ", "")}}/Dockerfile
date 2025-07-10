@@ -52,7 +52,7 @@ RUN groupadd -r app && useradd -r -g app app
 
 # Metadata
 ARG NAME="{{ cookiecutter.project_slug }}"
-ARG DESCRIPTION="{{ cookiecutter.project_short_description }}"
+ARG DESCRIPTION="{{ cookiecutter.project_short_description | replace('"', '\\"') | replace("'", "\\\\'") }}"
 ARG TIMESTAMP
 ARG COMMIT_HASH
 ENV SERVICE="${NAME}"

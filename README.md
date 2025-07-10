@@ -24,6 +24,7 @@ For FAQs including release workflow troubleshooting, see our [FAQ documentation]
 ## Getting Started
 
 1. Create an [empty GitHub repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/creating-a-new-repository)
+1. Ensure you have [`brew`](https://brew.sh/) installed
 1. Generate a project with the same name as the repo you just made:
 
     ```bash
@@ -33,8 +34,6 @@ For FAQs including release workflow troubleshooting, see our [FAQ documentation]
     # Initialize your project
     uvx --with gitpython cookiecutter gh:zenable-io/ai-native-python
     ```
-
-1. Review your newly populated GitHub repository 🎉
 
 ## Next Steps
 

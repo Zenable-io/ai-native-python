@@ -39,7 +39,16 @@ tasks:
       # Sync dependencies with uv
       - uv sync --frozen --all-extras
 
-  # init-submodules task removed - no longer using goat submodule
+  init-direnv:
+    desc: Sets up direnv locally
+    internal: true
+    status:
+      - '{{ '{{if eq .GITHUB_ACTIONS "true"}}exit 0{{end}}' }}'
+    cmds:
+      - task: brew-install
+        vars:
+          TOOLS: direnv
+      - direnv allow
 
   init-pre-commit:
     desc: Install the pre-commit hooks
@@ -68,6 +77,7 @@ tasks:
     desc: Initialize the repo for local use; intended to be run after git clone
     cmds:
       - task: init-uv
+      - task: init-direnv
       - task: init-pre-commit
       - task: init-docker-multiplatform
 
@@ -97,7 +107,7 @@ tasks:
       PLATFORM_SUFFIX: '{{ '{{if eq .PLATFORM "all"}}' }}all{{ '{{else if .PLATFORM}}' }}{{ '{{.PLATFORM | replace "/" "_"}}' }}{{ '{{else}}' }}{{ '{{.LOCAL_PLATFORM | replace "/" "_"}}' }}{{ '{{end}}' }}'
       # We always output to "latest", since we're also overwriting latest
       OUTPUT_FILE: '{{ '{{.IMAGE_NAME | replace "/" "_"}}' }}_latest_{{ '{{.PLATFORM_SUFFIX}}' }}.tar'
-      DESCRIPTION: '{{ cookiecutter.project_short_description }}'
+      DESCRIPTION: "{{ cookiecutter.project_short_description | replace('"', '\\"') | replace("'", "\\\\'") }}"
     cmds:
       # First build: load if same platform, output to file if cross-platform, or push if PUBLISH is true
       - |
@@ -239,6 +249,30 @@ tasks:
         {{ '{{.RUN_SCRIPT}}' }} {{ '{{.SCRIPTS_DIR}}' }}/scan_image.py license-check \
           --platform "{{ '{{.PLATFORM}}' }}" \
           --image-name "{{ '{{.IMAGE_NAME}}' }}"
+
+  brew-install:
+    desc: Install a tool via brew
+    internal: true
+    requires:
+      vars: [TOOLS]
+    vars:
+      FORCE_LINK: '{{ '{{.FORCE_LINK | default "false"}}' }}'
+      DEBUG: '{{ '{{if ne .ZENABLE_LOGLEVEL "DEBUG"}}' }}> /dev/null 2>&1{{ '{{end}}' }}'
+    env:
+      HOMEBREW_NO_INSTALL_UPGRADE: '{{ '{{if .GITHUB_ACTIONS}}' }}true{{ '{{end}}' }}'
+    cmds:
+      - 'echo "Installing tools with brew: {{ '{{.TOOLS}}' }}"'
+      - for:
+          var: TOOLS
+          split: ','
+          as: tool
+        # If the command fails, attempt to retry once before failing
+        cmd: brew install {{ '{{.tool}}' }} {{ '{{.DEBUG}}' }} || brew install {{ '{{.tool}}' }} {{ '{{.DEBUG}}' }}
+      - for:
+          var: TOOLS
+          split: ','
+          as: tool
+        cmd: '{{ '{{if eq .FORCE_LINK "true"}}' }}brew link --force {{ '{{.tool}}' }}{{ '{{else}}' }}true{{ '{{end}}' }}'
 
 {%- if cookiecutter.dockerhub == 'yes' %}
 

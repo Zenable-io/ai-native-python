@@ -1,5 +1,5 @@
 name: {{ cookiecutter.project_slug }}
-description: {{ cookiecutter.project_short_description }}
+description: "{{ cookiecutter.project_short_description | replace('"', '\\"') | replace("'", "\\\\'") }}"
 tags: [backend]  # Example options: api, backend, frontend, worker, scheduler, gateway, proxy, cache, storage
 develop:
   software:
