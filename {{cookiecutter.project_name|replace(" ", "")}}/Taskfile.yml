@@ -39,7 +39,14 @@ tasks:
       # Sync dependencies with uv
       - uv sync --frozen --all-extras
 
-  # init-submodules task removed - no longer using goat submodule
+  init-direnv:
+    desc: Sets up direnv
+    internal: true
+    cmds:
+      - task: brew-install
+        vars:
+          TOOLS: direnv
+      - direnv allow
 
   init-pre-commit:
     desc: Install the pre-commit hooks
@@ -68,6 +75,7 @@ tasks:
     desc: Initialize the repo for local use; intended to be run after git clone
     cmds:
       - task: init-uv
+      - task: init-direnv
       - task: init-pre-commit
       - task: init-docker-multiplatform
 
@@ -239,6 +247,30 @@ tasks:
         {{ '{{.RUN_SCRIPT}}' }} {{ '{{.SCRIPTS_DIR}}' }}/scan_image.py license-check \
           --platform "{{ '{{.PLATFORM}}' }}" \
           --image-name "{{ '{{.IMAGE_NAME}}' }}"
+
+  brew-install:
+    desc: Install a tool via brew
+    internal: true
+    requires:
+      vars: [TOOLS]
+    vars:
+      FORCE_LINK: '{{ '{{.FORCE_LINK | default "false"}}' }}'
+      DEBUG: '{{ '{{if ne .ZENABLE_LOGLEVEL "DEBUG"}}' }}> /dev/null 2>&1{{ '{{end}}' }}'
+    env:
+      HOMEBREW_NO_INSTALL_UPGRADE: '{{ '{{if .GITHUB_ACTIONS}}' }}true{{ '{{end}}' }}'
+    cmds:
+      - 'echo "Installing tools with brew: {{ '{{.TOOLS}}' }}"'
+      - for:
+          var: TOOLS
+          split: ','
+          as: tool
+        # If the command fails, attempt to retry once before failing
+        cmd: brew install {{ '{{.tool}}' }} {{ '{{.DEBUG}}' }} || brew install {{ '{{.tool}}' }} {{ '{{.DEBUG}}' }}
+      - for:
+          var: TOOLS
+          split: ','
+          as: tool
+        cmd: '{{ '{{if eq .FORCE_LINK "true"}}' }}brew link --force {{ '{{.tool}}' }}{{ '{{else}}' }}true{{ '{{end}}' }}'
 
 {%- if cookiecutter.dockerhub == 'yes' %}
 
