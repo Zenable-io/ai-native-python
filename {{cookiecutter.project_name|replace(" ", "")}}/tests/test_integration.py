@@ -102,7 +102,7 @@ def test_docker_image():
     Test that the Docker image builds and runs correctly.
     """
     project_root = Path(__file__).parent.parent
-    image_name = "{{ cookiecutter.github_org }}/{{ cookiecutter.project_slug }}"
+    image_name = "{{ cookiecutter.github_org }}/{{ cookiecutter.project_name | lower }}"
 
     pyproject_file = project_root / "pyproject.toml"
 

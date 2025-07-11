@@ -24,8 +24,8 @@ LOCAL_PLATFORM = f"{plat.system().lower()}/{plat.machine()}"
 def get_config() -> dict:
     """Generate all the config keys"""
     config_file = Path("./cookiecutter.json")
-    with open(config_file) as file_object:
-        config = json.load(file_object)
+    with config_file.open(encoding="utf-8") as f:
+        config = json.load(f)
     return config
 
 
@@ -227,6 +227,19 @@ def test_default_project(cookies):
     if repo.is_dirty(untracked_files=True):
         pytest.fail("Something went wrong with the project's post-generation hook")
 
+    # Extract project_name and project_slug from cookiecutter.json
+    config_file = Path("./cookiecutter.json")
+    with config_file.open(encoding="utf-8") as f:
+        generated_config = json.load(f)
+        github_org = generated_config.get("github_org")
+        project_name = generated_config.get("project_name")
+        project_name_lower = project_name.lower()
+
+        # Keep this logic aligned with the template's README.md
+        # It's important that this has -s in the name to test the docker hub image name sanitization
+        default_image_name = f"{github_org}/{project_name_lower}"
+        default_image_name_and_tag = f"{default_image_name}:latest"
+
     try:
         env = os.environ.copy()
         env.pop("VIRTUAL_ENV", None)  # Clean VIRTUAL_ENV to avoid conflicts
@@ -273,11 +286,9 @@ def test_default_project(cookies):
                 env=env,
             )
 
-        default_image = "zenable-io/todo:latest"
-
         # Ensure that --help exits 0
         subprocess.run(
-            ["docker", "run", "--rm", default_image, "--help"],
+            ["docker", "run", "--rm", default_image_name_and_tag, "--help"],
             capture_output=True,
             check=True,
             cwd=project,
@@ -288,7 +299,7 @@ def test_default_project(cookies):
             "docker",
             "run",
             "--rm",
-            default_image,
+            default_image_name_and_tag,
             "--debug",
             "--verbose",
         ]
