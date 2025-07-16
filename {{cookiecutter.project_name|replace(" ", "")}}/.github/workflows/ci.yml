@@ -146,5 +146,11 @@ jobs:
             echo "One or more required jobs failed or was cancelled. Marking finalizer as failed."
             exit 1
           fi
+      - name: Checkout the repository
+        uses: actions/checkout@v4
+      - name: Scan workflow logs for warnings and errors
+        run: scripts/scan-workflow-logs.sh {% raw %}${{ github.run_id }}{% endraw %}
+        env:
+          GITHUB_TOKEN: "{% raw %}${{ secrets.GITHUB_TOKEN }}{% endraw %}"
       - name: Finalize
         run: echo "Pipeline complete!"
