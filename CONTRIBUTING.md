@@ -2,7 +2,7 @@
 
 To contribute to this project, please fork the repository and open a pull request with your changes.
 
-Also, see our Contributors Code of Conduct [here](./.github/CONTRIBUTING.md).
+Also, see our Contributors Code of Conduct [here](./.github/CODE_OF_CONDUCT.md).
 
 ## Updating the dependencies
 

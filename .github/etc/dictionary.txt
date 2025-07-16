@@ -1,7 +1,14 @@
 allstar
+anchore
+buildx
 cookiecutter
 dependabot
 digestabot
+dockerhub
+envrc
+htmlcov
+pylance
+pythonpath
 refurb
 skopeo
 syft

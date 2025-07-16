@@ -19,7 +19,7 @@ Make your tools meet every requirement on the first pass, letting you ship faste
 - 📦 Ensure usability across all major platforms with multi-platform Docker builds
 - 🔄 Automated versioning and releasing with `python-semantic-release`
 
-For FAQs including release workflow troubleshooting, see our [FAQ documentation](./FAQ.md)
+For more details, see our [documentation](docs/index.md).
 
 ## Getting Started
 
@@ -60,14 +60,4 @@ git checkout -b initial-content
 
 # Check for `NotImplementedError`s and address them as a part of adding your business logic
 grep -r NotImplementedError *
-```
-
-### Optional setup
-
-If you'd like to support license file checking locally, you will need to install `grant` and put it in your `PATH`
-
-Additionally, if you'd like to use SSH instead of HTTPS to connect to the `ai-native-python` project, use this command instead:
-
-```bash
-uvx --with gitpython cookiecutter git+ssh://git@github.com/zenable-io/ai-native-python.git
 ```
