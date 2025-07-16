@@ -164,17 +164,23 @@ tasks:
   unit-test:
     desc: Run the project unit tests
     deps: ["coverage-erase"]
+    vars:
+      # If CLI_ARGS are set, append them as an "and" after the -m unit
+      MARK_EXPR: unit{{ '{{if .CLI_ARGS}}' }} and {{ '{{.CLI_ARGS}}{{end}}' }}
     cmds:
-      - '{{ '{{.RUN_SCRIPT}}' }} pytest -m unit tests/'
+      - '{{ '{{.RUN_SCRIPT}}' }} pytest -m "{{ '{{.MARK_EXPR}}' }}" tests/'
 
   integration-test:
     desc: Run the project integration tests
     deps: ["coverage-erase"]
+    vars:
+      # If CLI_ARGS are set, append them as an "and" after the -m integration
+      MARK_EXPR: integration{{ '{{if .CLI_ARGS}}' }} and {{ '{{.CLI_ARGS}}{{end}}' }}
     status:
       # Only run integration tests when the PLATFORM is set to all or the same platform as we're running on
       - '{{ '{{if or (eq .PLATFORM "all") (eq .PLATFORM .LOCAL_PLATFORM) (not .PLATFORM)}}' }}exit 1{{ '{{else}}' }}exit 0{{ '{{end}}' }}'
     cmds:
-      - '{{ '{{.RUN_SCRIPT}}' }} pytest -m integration tests/'
+      - '{{ '{{.RUN_SCRIPT}}' }} pytest -m "{{ '{{.MARK_EXPR}}' }}" tests/'
 
   update:
     desc: Update the project dev and runtime dependencies

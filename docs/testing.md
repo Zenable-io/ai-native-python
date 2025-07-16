@@ -20,6 +20,12 @@ task unit-test          # Run unit tests only
 task integration-test   # Run integration tests only
 ```
 
+If you'd like to exclude tests that are marked a certain way, you can pass additional details to the above tasks, for instance:
+
+```bash
+task test -- "not slow" # Skip slow tests
+```
+
 ### What Template Tests Cover
 
 - **Generation Validation**: Tests with various input combinations to ensure valid project generation

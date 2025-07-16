@@ -76,13 +76,19 @@ tasks:
 
   unit-test:
     desc: Run the unit tests
+    vars:
+      # If CLI_ARGS are set, append them as an "and" after the -m unit
+      MARK_EXPR: unit{{if .CLI_ARGS}} and {{.CLI_ARGS}}{{end}}
     cmds:
-      - '{{.RUN_SCRIPT}} pytest --keep-baked-projects -m unit tests/'
+      - '{{.RUN_SCRIPT}} pytest --keep-baked-projects -m "{{.MARK_EXPR}}" tests/'
 
   integration-test:
     desc: Run the integration tests
+    vars:
+      # If CLI_ARGS are set, append them as an "and" after the -m integration
+      MARK_EXPR: integration{{if .CLI_ARGS}} and {{.CLI_ARGS}}{{end}}
     cmds:
-      - '{{.RUN_SCRIPT}} pytest --keep-baked-projects -m integration tests/'
+      - '{{.RUN_SCRIPT}} pytest --keep-baked-projects -m "{{.MARK_EXPR}}" tests/'
 
   update:
     desc: Update the project dev and runtime dependencies
