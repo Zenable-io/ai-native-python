@@ -55,13 +55,10 @@ This is a **template generator** that creates Python projects with:
 task init
 
 # Run tests and linting
-task build test
+task lint build test
 
 # Generate a project from template
-uvx cookiecutter .
-
-# Test template with default values
-pytest tests/
+uvx --with gitpython cookiecutter .
 ```
 
 ## When Making Changes
@@ -71,6 +68,7 @@ pytest tests/
 3. **Test Thoroughly**: Both template and generated projects
 4. **Document Changes**: Update relevant documentation
 5. **Security First**: No hardcoded secrets, follow OWASP guidelines
+6. **Maintain Documentation**: When making changes to features, update the corresponding documentation in the `docs/` folder
 
 ## Template Variables
 
@@ -133,6 +131,10 @@ def test_template_generation(cookies):
 3. Run security scans regularly
 4. Keep dependencies updated
 5. Follow principle of least privilege
+
+## Documentation Structure
+
+The project documentation is organized in the `docs/` folder. When modifying any feature documented above, ensure the corresponding documentation is updated.
 
 ## Helpful Context
 

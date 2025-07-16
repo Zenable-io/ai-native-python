@@ -2,6 +2,8 @@
 
 This document outlines future improvements and enhancements for the ai-native-python project.
 
+[← Back to Documentation Index](index.md)
+
 ## Ideas
 
 ### 1. Add Policy as Code
@@ -15,6 +17,7 @@ This document outlines future improvements and enhancements for the ai-native-py
 
 - Keep the public yes/no but split out a CodeQL yes/no (default to yes; secure by default but it may error if insufficient licensing)
 - Improve the docs around releasing and rulesets/branch protections
+- Add support for releasing to pypi via oidc
 
 ### 3. Improve project health checks
 
@@ -65,10 +68,4 @@ We welcome community feedback and contributions. Some areas where we'd especiall
 
 ## Contributing
 
-If you're interested in contributing to any of these roadmap items, please:
-
-1. Open an issue to discuss the feature
-2. Submit a pull request with your implementation
-3. Update this roadmap as items are completed
-
-For more information, see [CONTRIBUTING.md](.github/CONTRIBUTING.md)
+If you're interested in contributing to any of these roadmap items, please see our [contribution guide](../CONTRIBUTING.md), and thank you! 🎉
