@@ -69,14 +69,11 @@ vars:
 
 For detailed information about pre-commit hooks configuration and available hooks, see the [Hooks Guide](hooks.md#pre-commit-hooks).
 
-### GitHub Actions Configuration
-
-For detailed information about CI/CD workflows and customization options, see the [CI/CD Guide](ci-cd.md).
-
-#### Required Secrets
+#### Docker Hub Secrets
 
 If you enabled Docker Hub publishing:
+
 - `DOCKERHUB_USERNAME`
 - `DOCKERHUB_PAT`
 
-These will be printed as a reminder after project generation.
+A reminder to set this is also printed after project generation if you answered "yes" to the docker hub question.
