@@ -6,10 +6,8 @@ built-in.
 ## Context
 
 - This is a **template generator**, not a regular Python project
-- Files in `{{cookiecutter.project_name}}` directory contain Jinja2 template variables
+- Files in the `{{cookiecutter.project_name ... }}` directory contain Jinja2 template variables
 - The project uses `uv` as the package manager (not pip or poetry)
-- Python 3.13+ is the minimum requirement
-- The template uses python-semantic-release for automated versioning
 
 ## Code Conventions
 
@@ -60,7 +58,7 @@ Common tasks are automated via Taskfile:
 3. Follow the established project structure
 4. Include appropriate error handling
 5. Add tests for new functionality
-6. Update documentation as needed
+6. Update documentation in the docs/ directory as features are added or changed
 
 ## Template-Specific Guidelines
 

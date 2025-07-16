@@ -1,5 +1,7 @@
 # Frequently Asked Questions
 
+[← Back to Documentation Index](index.md)
+
 ## Version Control System support
 
 ### Q: Do you support version control platforms other than GitHub?
@@ -10,7 +12,8 @@
 
 ### Q: Why is my release workflow failing with permission errors?
 
-**A:** The release workflow requires the GitHub Actions bot to have permission to push commits to the main branch. This is necessary because semantic-release creates a commit to update version numbers in files.
+**A:** The release workflow requires the GitHub Actions bot to have permission to push commits to the main branch. This is necessary because semantic-release
+creates a commit to update version numbers in files.
 
 #### Solution:
 
@@ -35,16 +38,6 @@ If you've already generated the project and just want to fix it up from here, fo
 3. **For organizations with restricted permissions:**
    - The organization may need to explicitly grant the GitHub Actions app permission to push
    - Contact your organization administrators if default permissions are restricted
-
-### Q: Why does semantic-release fail with "no commits to release"?
-
-**A:** Semantic-release uses conventional commits to determine the next version. If there are no commits following the conventional commit format since the last release, it won't create a new release.
-
-Ensure your commits follow the format:
-- `feat:` for new features (triggers minor version bump)
-- `fix:` for bug fixes (triggers patch version bump)
-- `BREAKING CHANGE:` in the commit body (triggers major version bump)
-- Other types like `docs:`, `chore:`, `style:` don't trigger releases
 
 ### Q: Can I manually specify the version number?
 
