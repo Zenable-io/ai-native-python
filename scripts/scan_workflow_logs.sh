@@ -80,7 +80,7 @@ find . -type f -name "*.txt" | while IFS= read -r logfile; do
     content=$(echo "$line" | cut -d: -f3-)
 
     # Sanitize content to prevent command injection and log poisoning
-    sanitized_content=$(echo "$content" | tr -d '\n\r' | head -c 200)
+    sanitized_content=$(echo "$content" | tr -d '\n\r' | cut -c1-200)
 
     # Determine the type of issue and output both annotation and count
     if echo "$content" | grep -qiE '\berror\b'; then
