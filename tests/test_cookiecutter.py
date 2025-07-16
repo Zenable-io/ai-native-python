@@ -212,6 +212,7 @@ def test_autofix_hook(cookies, context):
 
 
 @pytest.mark.integration
+@pytest.mark.slow
 def test_default_project(cookies):
     """
     Test a default project thoroughly

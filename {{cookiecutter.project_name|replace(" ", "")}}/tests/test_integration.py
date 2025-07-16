@@ -13,6 +13,7 @@ import pytest
 
 
 @pytest.mark.integration
+@pytest.mark.slow
 def test_project_tasks():
     """
     Test the project's task runner commands work together properly.
