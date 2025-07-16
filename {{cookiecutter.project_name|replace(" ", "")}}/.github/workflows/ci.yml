@@ -149,7 +149,7 @@ jobs:
       - name: Checkout the repository
         uses: actions/checkout@v4
       - name: Scan workflow logs for warnings and errors
-        run: scripts/scan-workflow-logs.sh {% raw %}${{ github.run_id }}{% endraw %}
+        run: scripts/scan_workflow_logs.sh {% raw %}${{ github.run_id }}{% endraw %}
         env:
           GITHUB_TOKEN: "{% raw %}${{ secrets.GITHUB_TOKEN }}{% endraw %}"
       - name: Finalize
