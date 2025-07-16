@@ -2,6 +2,8 @@
 
 This guide covers optional setup steps and configurations for the AI-Native Python template.
 
+[← Back to Documentation Index](index.md)
+
 ## Grant Installation (License Compliance)
 
 If you'd like to support license file checking locally, you will need to install `grant` and put it in your `PATH`. See [their installation

@@ -9,7 +9,7 @@ Welcome to the AI-Native Python documentation. This guide will help you understa
 - [Optional Setup](optional-setup.md) - Additional tools and configurations
 
 ### Development Workflow
-- [AI IDE Support](ai-ide-support.md) - Claude, Copilot, and Cursor configurations
+- [AI IDE Support](ai-ide-support.md) - such as configuring Claude, Copilot, Cursor, or other IDEs
 - [Testing](testing.md) - Test structure, running tests, and coverage
 - [Hooks](hooks.md) - Cookiecutter and pre-commit hooks
 

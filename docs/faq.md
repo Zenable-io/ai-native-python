@@ -1,5 +1,7 @@
 # Frequently Asked Questions
 
+[← Back to Documentation Index](index.md)
+
 ## Version Control System support
 
 ### Q: Do you support version control platforms other than GitHub?

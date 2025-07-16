@@ -2,6 +2,8 @@
 
 The AI-Native Python template uses hooks to automate setup tasks automatically.
 
+[← Back to Documentation Index](index.md)
+
 ## Cookiecutter Hooks
 
 ### Post-Generation Hook

@@ -2,6 +2,8 @@
 
 This guide covers the configuration options available in the AI-Native Python cookiecutter template.
 
+[← Back to Documentation Index](index.md)
+
 ## Cookiecutter Variables
 
 When generating a new project, you'll be prompted for the following configuration options:

@@ -2,6 +2,8 @@
 
 The AI-Native Python template includes GitHub Actions workflows for automated testing, security scanning, and release management.
 
+[← Back to Documentation Index](index.md)
+
 ## Included Workflows
 
 ### CI Pipeline (`.github/workflows/ci.yml`)

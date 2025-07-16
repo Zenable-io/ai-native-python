@@ -2,6 +2,9 @@
 
 The AI-Native Python template includes configuration files to work seamlessly with AI-powered development tools.
 
+[← Back to Documentation Index](index.md)
+
+
 ## Tool-agnostic configurations
 
 ### .mcp.json

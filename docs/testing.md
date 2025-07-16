@@ -5,6 +5,8 @@ This document covers two distinct testing contexts:
 1. **Template Tests** - Tests for the AI-Native Python cookiecutter template itself (i.e. this repository)
 2. **Generated Project Tests** - Tests included in projects created from this template (i.e. projects rendered after running `cookiecutter`)
 
+[← Back to Documentation Index](index.md)
+
 ## Template Tests
 
 These tests ensure the cookiecutter template works correctly and generates valid projects.
@@ -42,9 +44,9 @@ Every project created from this template includes a complete testing setup.
 
 ```bash
 # From the generated project root
-task test                     # Run all tests with coverage
-pytest tests/unit -v         # Run unit tests only
-pytest tests/integration -v  # Run integration tests only
+task test                    # Run all tests with coverage
+task unit-test               # Run unit tests only
+task integration-test        # Run integration tests only
 ```
 
 ### Writing Tests in Generated Projects
