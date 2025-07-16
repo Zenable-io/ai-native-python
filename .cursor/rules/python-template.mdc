@@ -41,6 +41,7 @@ task lint       # Check code quality
 ## Template Testing
 
 ```bash
-uvx --with gitpython cookiecutter .    # Generate project
-pytest tests/         # Test template
+uvx --with gitpython cookiecutter . --no-input    # Generate a default project
+cd $(ls -td * | head -1)
+task init test                                    # Test the template
 ```
