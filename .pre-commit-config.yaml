@@ -40,7 +40,7 @@ repos:
      - id: shellcheck
        args: [ -x, --source-path=SCRIPTDIR ]
  - repo: https://github.com/trufflesecurity/trufflehog
-   rev: 6641d4ba5b684fffe195b9820345de1bf19f3181  # frozen: v3.89.2
+   rev: eafb8c5f6a06175141c27f17bcc17941853d0047  # frozen: v3.90.0
    hooks:
      - id: trufflehog
        # Check the past 2 commits; it's useful to make this go further back than main when running this where main and HEAD are equal
@@ -50,7 +50,7 @@ repos:
    hooks:
     - id: openapi-spec-validator
  - repo: https://github.com/streetsidesoftware/cspell-cli
-   rev: 3323d7607f0dc401568e9cc3f66c9cff8036bf22  # frozen: v9.1.0
+   rev: 754ed0bfd80163c4150d09bea04762e9d764e7ec  # frozen: v9.1.1
    hooks:
      - id: cspell
        types: [markdown]
