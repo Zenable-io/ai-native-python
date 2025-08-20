@@ -1,7 +1,7 @@
 ---
 repos:
  - repo: https://github.com/astral-sh/ruff-pre-commit
-   rev: 6c5418a077bd954e7078087a655421b85772095b  # frozen: v0.12.4
+   rev: 54a455f7ce629598b7535ff828fd5fb796f4b83f  # frozen: v0.12.9
    hooks:
      - id: ruff-check
        types_or: [ python, pyi, jupyter ]
@@ -9,7 +9,7 @@ repos:
      - id: ruff-format
        types_or: [ python, pyi, jupyter ]
  - repo: https://github.com/pre-commit/pre-commit-hooks
-   rev: cef0300fd0fc4d2a87a85fa2093c6b283ea36f4b  # frozen: v5.0.0
+   rev: 3e8a8703264a2f4a69428a0aa4dcb512790b2c8c  # frozen: v6.0.0
    hooks:
     - id: check-case-conflict
     - id: check-executables-have-shebangs
@@ -23,7 +23,7 @@ repos:
     - id: end-of-file-fixer
     - id: trailing-whitespace
  - repo: https://github.com/lycheeverse/lychee
-   rev: e743ea3f5f02cd989452229f51b2b0c139037ff9  # frozen: nightly
+   rev: 428baa39f3f848c13685ee3f1c8cf1e31a61deeb  # frozen: nightly
    hooks:
      - id: lychee-docker
        # Keep all other configs in the config file
@@ -34,12 +34,12 @@ repos:
    hooks:
      - id: actionlint-docker
  - repo: https://github.com/koalaman/shellcheck-precommit
-   rev: 2491238703a5d3415bb2b7ff11388bf775372f29  # frozen: v0.10.0
+   rev: 99470f5e12208ff0fb17ab81c3c494f7620a1d8d  # frozen: v0.11.0
    hooks:
      - id: shellcheck
        args: [ -x, --source-path=SCRIPTDIR ]
  - repo: https://github.com/trufflesecurity/trufflehog
-   rev: 907ac64fd42b18dab2ceba2fda39834d3f8ba7e3  # frozen: v3.90.1
+   rev: 0f58ae7c5036094a1e3e750d18772af92821b503  # frozen: v3.90.5
    hooks:
      - id: trufflehog
        # Check the past 2 commits; it's useful to make this go further back than main when running this where main and HEAD are equal
