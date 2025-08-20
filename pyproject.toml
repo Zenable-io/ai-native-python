@@ -55,6 +55,7 @@ pythonpath = ['.']
 markers = [
     "unit: marks tests as unit tests (deselect with '-m \"not unit\"')",
     "integration: marks tests as integration tests (deselect with '-m \"not integration\"')",
+    "slow: marks tests as slow tests (deselect with '-m \"not slow\"')",
 ]
 
 [tool.uv]

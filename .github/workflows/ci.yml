@@ -75,6 +75,8 @@ jobs:
           echo "${RUNNER_TEMP}/bin" | tee -a "${GITHUB_PATH}"
       - name: Run the tests
         run: task -v test
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Run SBOM generation
         run: task -v sbom
       - name: Upload SBOM artifacts
