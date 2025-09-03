@@ -27,7 +27,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout the repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           persist-credentials: 'false'
       - name: Bootstrap repository
@@ -44,14 +44,14 @@ jobs:
       contents: write
     steps:
       - name: Checkout the repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         # Necessary for hooks to succeed during tests for commits/schedule
         if: github.event_name != 'pull_request'
         with:
           fetch-depth: 0
           persist-credentials: 'false'
       - name: Checkout the repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         # Necessary for hooks to succeed during tests for PRs
         if: github.event_name == 'pull_request'
         with:
@@ -121,7 +121,7 @@ jobs:
             exit 1
           fi
       - name: Checkout the repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Scan workflow logs for warnings and errors
         run: scripts/scan_workflow_logs.sh ${{ github.run_id }}
         env:
