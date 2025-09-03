@@ -1,0 +1,6 @@
+---
+- id: zenable-check
+  name: Run a Zenable check on all changed files
+  language: system
+  entry: uvx zenable-mcp check
+  pass_filenames: true
