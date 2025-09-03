@@ -236,7 +236,7 @@ def install_zenable_mcp() -> None:
             print("\n" + "=" * 70)
             print("Installing zenable-mcp...")
             print("=" * 70)
-            subprocess.run(["uvx", "zenable-mcp@latest", "install"], check=True, timeout=60)
+            subprocess.run(["uvx", "zenable-mcp@latest", "install", "--all"], check=True, timeout=60)
             print("zenable-mcp has been successfully installed")
             print("=" * 70 + "\n")
         # Fallback to uv run if uvx is not available but uv is
