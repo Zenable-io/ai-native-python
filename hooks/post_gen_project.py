@@ -6,7 +6,6 @@ Post-project generation hook
 import datetime
 import json
 import os
-import platform
 import pprint
 import shutil
 import subprocess
@@ -153,6 +152,7 @@ def notify_envrc() -> None:
 
 def notify_dockerhub_secrets() -> None:
     """Notify user about required Docker Hub secrets for releases."""
+    # We no longer need this once https://github.com/docker/roadmap/issues/314 is available
     print("\n" + "=" * 70)
     print("IMPORTANT: Docker Hub Publishing Enabled")
     print("=" * 70)
@@ -169,92 +169,44 @@ def notify_dockerhub_secrets() -> None:
     print("=" * 70 + "\n")
 
 
-def ensure_uv_installed() -> None:
-    """Opportunistically ensure uv is installed on the system."""
-    try:
-        # Check if uvx is already available
-        if shutil.which("uvx"):
-            LOG.info("uvx is already available in PATH")
-            return
-
-        # Check if uv is installed but uvx might not be in PATH
-        if shutil.which("uv"):
-            LOG.info("uv is available but uvx might not be in PATH")
-            return
-
+def opportunistically_install_zenable_tools() -> None:
+    """Opportunistically install zenable-mcp if uvx is available."""
+    # Check if uvx is not available
+    if not shutil.which("uvx"):
+        # uvx is not available, notify the user
         print("\n" + "=" * 70)
-        print("Installing uv package manager...")
+        print("NOTE: Skipped configuring the Zenable AI coding guardrails")
         print("=" * 70)
-
-        system = platform.system()
-
-        if system in ["Linux", "Darwin"]:  # Unix-like systems (Linux and macOS)
-            # Use the standalone installer for Unix-like systems
-            install_cmd = "curl -LsSf https://astral.sh/uv/install.sh | sh"
-            subprocess.run(install_cmd, shell=True, check=True, capture_output=True, timeout=30)
-
-            # Add to PATH for current session
-            home = Path.home()
-            uv_bin = home / ".local" / "bin"
-            if uv_bin.exists():
-                os.environ["PATH"] = f"{uv_bin}:{os.environ.get('PATH', '')}"
-
-        elif system == "Windows":
-            # Use PowerShell for Windows
-            install_cmd = [
-                "powershell",
-                "-ExecutionPolicy",
-                "ByPass",
-                "-c",
-                "irm https://astral.sh/uv/install.ps1 | iex",
-            ]
-            subprocess.run(install_cmd, check=True, capture_output=True, timeout=30)
-
-            # Add to PATH for current session on Windows
-            home = Path.home()
-            uv_bin = home / ".local" / "bin"
-            if uv_bin.exists():
-                os.environ["PATH"] = f"{uv_bin};{os.environ.get('PATH', '')}"
-        else:
-            LOG.info(f"Unsupported platform for automatic uv installation: {system}")
-            return
-
-        print("uv has been successfully installed")
+        print("\nConfiguring the Zenable AI coding guardrails requires the uv package manager.")
+        print("To set this up later:")
+        print("\n1. Install uv via https://docs.astral.sh/uv/getting-started/installation/")
+        print("2. Run: uvx zenable-mcp@latest install")
         print("=" * 70 + "\n")
 
-    except Exception as e:
-        # Log the error but don't fail - this is opportunistic
-        LOG.info(f"Could not install uv automatically (this is optional): {e}")
-        # Don't print anything to the user - this is an optional step
+        LOG.warning("uvx was not found in PATH, so the Zenable integrations were not installed.")
+        return
 
-
-def install_zenable_mcp() -> None:
-    """Opportunistically install zenable-mcp using uvx."""
+    # uvx is available, attempt to install zenable-mcp
+    LOG.debug("uvx is available in PATH, attempting to install the Zenable tools...")
     try:
-        # Try to use uvx first
-        if shutil.which("uvx"):
-            print("\n" + "=" * 70)
-            print("Installing zenable-mcp...")
-            print("=" * 70)
-            subprocess.run(["uvx", "zenable-mcp@latest", "install", "--all"], check=True, timeout=60)
-            print("zenable-mcp has been successfully installed")
-            print("=" * 70 + "\n")
-        # Fallback to uv run if uvx is not available but uv is
-        elif shutil.which("uv"):
-            print("\n" + "=" * 70)
-            print("Installing zenable-mcp...")
-            print("=" * 70)
-            subprocess.run(["uv", "run", "--with", "zenable-mcp", "zenable-mcp", "install"], check=True, timeout=60)
-            print("zenable-mcp has been successfully installed")
-            print("=" * 70 + "\n")
-        else:
-            # No uv/uvx available, silently skip
-            LOG.info("Neither uvx nor uv found in PATH. Skipping zenable-mcp installation.")
-
-    except Exception as e:
+        subprocess.run(["uvx", "zenable-mcp@latest", "install"], check=True, timeout=60)
+        print("\n" + "=" * 70)
+        print("Successfully configured the Zenable AI coding guardrails 🚀")
+        print("To start using it, just open the IDE of your choice, login to the MCP server, and you're all set 🤖")
+        print("Learn more at https://docs.zenable.io")
+        print("=" * 70 + "\n")
+    except Exception:
         # Log the error but don't fail - this is opportunistic
-        LOG.info(f"Could not install zenable-mcp automatically (this is optional): {e}")
-        # Don't print error messages to the user - this is an optional step
+        LOG.warning("Failed to configure the Zenable AI coding guardrails")
+        print("\n" + "=" * 70)
+        print("WARNING: Failed to configure the Zenable AI coding guardrails")
+        print("=" * 70)
+        print("You can retry it later by running:")
+        print("\n  uvx zenable-mcp@latest install")
+        print("\nTo report issues, please contact:")
+        print("  • https://zenable.io/feedback")
+        print("  • support@zenable.io")
+        print("=" * 70 + "\n")
 
 
 def run_post_gen_hook():
@@ -274,9 +226,7 @@ def run_post_gen_hook():
 
         subprocess.run(["git", "init", "--initial-branch=main"], capture_output=True, check=True)
 
-        # Ensure uv is installed and install zenable-mcp
-        ensure_uv_installed()
-        install_zenable_mcp()
+        opportunistically_install_zenable_tools()
 
         # This is important for testing project generation for CI
         if (
