@@ -1,13 +1,48 @@
-rules:
-  - pattern: "*"
-    name: "Block AGPL licenses"
-    mode: "block"
-    reason: "AGPL licenses are not allowed in this project"
-    licenses:
-      - "agpl"
-      - "agpl-1.0"
-      - "agpl-1.0-only"
-      - "agpl-1.0-or-later"
-      - "agpl-3.0"
-      - "agpl-3.0-only"
-      - "agpl-3.0-or-later"
+require-license: false  # Some packages may not have explicit licenses
+require-known-license: false
+
+# Allow list - licenses that are permitted
+allow:
+  # Permissive licenses
+  - MIT
+  - Apache-2.0
+  - BSD-2-Clause
+  - BSD-3-Clause
+  - BSD
+  - BSD-License
+  - ISC
+  - ISC-License
+  - 0BSD
+
+  # Python-specific licenses
+  - PSF-2.0
+  - Python-2.0
+  - Dual-License
+
+  # Weak copyleft licenses (generally acceptable)
+  - LGPL
+  - LGPL-2.1
+  - LGPL-2.1-or-later
+  - LGPL-3.0
+  - LGPL-3.0-or-later
+  - MPL-2.0
+
+  # Other licenses
+  - Unlicense
+  - CC0-1.0
+  - WTFPL
+  - Artistic-License
+  - GPL-3.0-only
+
+# Block list - licenses that are not allowed
+block:
+  - AGPL-1.0
+  - AGPL-1.0-only
+  - AGPL-1.0-or-later
+  - AGPL-3.0
+  - AGPL-3.0-only
+  - AGPL-3.0-or-later
+
+# Ignore specific packages if needed
+ignore-packages:
+  - "UnknownPackage:*"
