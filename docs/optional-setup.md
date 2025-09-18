@@ -48,8 +48,4 @@ uvx --with gitpython cookiecutter git+ssh://git@github.com/zenable-io/ai-native-
 
 ## Environment Variable Configuration
 
-Generated projects include an `.envrc` file for environment-specific settings. API keys can be pre-populated during project generation by setting environment
-variables before running cookiecutter (see the [Hooks Guide](hooks.md#configuration)).
-
-To request support for additional API keys, please [open an issue](https://github.com/Zenable-io/ai-native-python/issues/new) or [pull
-request](../CONTRIBUTING.md)!
+Set environment variables before running cookiecutter to modify hook behavior (see the [Hooks Guide](hooks.md#configuration)).
