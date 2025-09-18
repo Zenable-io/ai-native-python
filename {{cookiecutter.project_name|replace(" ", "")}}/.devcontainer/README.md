@@ -17,13 +17,19 @@ This project includes Dev Container support for VS Code and other compatible edi
 2. In VS Code, use Command Palette: `Dev Containers: Attach to Running Container`
 3. Select the `{{ cookiecutter.project_slug }}-dev` container
 
-### Option 3: Manual Docker Commands
+### Option 3: Command Line Access
 ```bash
 # Build and start the dev container
 task dev-container
 
+# Check if container is running
+task dev-container-status
+
 # Access the container shell
-docker exec -it {{ cookiecutter.project_slug }}-dev bash
+task dev-container-shell
+
+# Run a specific command
+task dev-container-exec CMD="python --version"
 
 # Stop the container when done
 task dev-container-stop
@@ -41,7 +47,7 @@ The dev container includes:
 ## Environment
 
 - `DEV_MODE=true` - Installs all development dependencies
-- `PYTHONPATH=/workspace/src` - Ensures proper module imports
+- Python path set to `/workspace/src` - Ensures proper module imports
 - Working directory: `/workspace`
 
 ## Troubleshooting

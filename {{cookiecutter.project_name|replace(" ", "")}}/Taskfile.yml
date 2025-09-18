@@ -226,11 +226,11 @@ tasks:
       - |
         echo "✅ Development container '{{ '{{.PROJECT_SLUG}}' }}-dev' is running!"
         echo ""
-        echo "To attach to it:"
+        echo "To use it:"
         echo "  • VS Code: Use 'Dev Containers: Attach to Running Container' command"
-        echo "  • Terminal: docker exec -it {{ '{{.PROJECT_SLUG}}' }}-dev bash"
-        echo ""
-        echo "To stop it: task dev-container-stop"
+        echo "  • Terminal: task dev-container-shell"
+        echo "  • Check status: task dev-container-status"
+        echo "  • Stop: task dev-container-stop"
 
   dev-container-stop:
     desc: Stop and remove development container
@@ -238,6 +238,31 @@ tasks:
       - docker stop {{ '{{.PROJECT_SLUG}}' }}-dev 2>/dev/null || true
       - docker rm {{ '{{.PROJECT_SLUG}}' }}-dev 2>/dev/null || true
       - echo "Development container stopped and removed."
+
+  dev-container-exec:
+    desc: Execute a command in the development container (default: bash)
+    vars:
+      CMD: '{{ '{{.CMD | default "bash"}}' }}'
+    cmds:
+      - docker exec -it {{ '{{.PROJECT_SLUG}}' }}-dev {{ '{{.CMD}}' }}
+
+  dev-container-shell:
+    desc: Open a shell in the development container
+    cmds:
+      - task: dev-container-exec
+        vars:
+          CMD: bash
+
+  dev-container-status:
+    desc: Check status of the development container
+    cmds:
+      - |
+        if docker ps --format "table {{ '{{.Names}}' }}" | grep -q "^{{ '{{.PROJECT_SLUG}}' }}-dev$"; then
+          echo "✅ Development container '{{ '{{.PROJECT_SLUG}}' }}-dev' is running"
+        else
+          echo "❌ Development container '{{ '{{.PROJECT_SLUG}}' }}-dev' is not running"
+          echo "Run 'task dev-container' to start it"
+        fi
 
   clean:
     desc: Clean up build artifacts, cache files/directories, temp files, etc.
