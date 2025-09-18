@@ -14,9 +14,8 @@ The `post_gen_project.py` hook runs after project generation to:
 2. Create the project's initial commit
 3. Set up GitHub remote (if credentials available)
 4. Generate a fully up-to-date `uv.lock` file
-5. Create an `.envrc` with API keys
-6. Run `task init` to install dependencies
-7. Push to GitHub and create an initial release
+5. Run `task init` to install dependencies
+6. Push to GitHub and create an initial release
 
 ### Configuration
 
@@ -24,7 +23,6 @@ Environment variables can be set before running cookiecutter to modify hook beha
 
 - `SKIP_GIT_PUSH=true` - Skip automatic Git push
 - `RUN_POST_HOOK=false` - Skip the post-generation hook entirely (not recommended)
-- `ZENABLE_API_KEY="..."` - Auto-populate API key in .envrc
 
 For more environment variable options, see the [Optional Setup Guide](optional-setup.md#environment-variable-configuration).
 

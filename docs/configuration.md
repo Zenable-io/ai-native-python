@@ -40,13 +40,9 @@ After your project is generated, you are able to make any changes you'd like. He
 
 ### Environment Variables
 
-Create or modify the `.envrc` file in your project root:
+Set environment variables for development:
 
 ```bash
-# API Keys
-export ZENABLE_API_KEY="your-api-key-here"
-
-# Development settings
 export PYTHONPATH="${PWD}/src:${PYTHONPATH}"
 export UV_PYTHON_PREFERENCE="only-system"
 ```
