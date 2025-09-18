@@ -39,17 +39,6 @@ tasks:
       # Sync dependencies with uv
       - uv sync --frozen --all-extras
 
-  init-direnv:
-    desc: Sets up direnv locally
-    internal: true
-    status:
-      - '{{ '{{if eq .GITHUB_ACTIONS "true"}}exit 0{{end}}' }}'
-    cmds:
-      - task: brew-install
-        vars:
-          TOOLS: direnv
-      - direnv allow
-
   init-pre-commit:
     desc: Install the pre-commit hooks
     internal: true
@@ -77,7 +66,6 @@ tasks:
     desc: Initialize the repo for local use; intended to be run after git clone
     cmds:
       - task: init-uv
-      - task: init-direnv
       - task: init-pre-commit
       - task: init-docker-multiplatform
 

@@ -5,7 +5,6 @@ cookiecutter
 dependabot
 digestabot
 dockerhub
-envrc
 htmlcov
 pylance
 pythonpath
