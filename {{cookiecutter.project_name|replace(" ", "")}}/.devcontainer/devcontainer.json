@@ -1,0 +1,53 @@
+{
+  "name": "{{ cookiecutter.project_name }}",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "dev",
+  "workspaceFolder": "/workspace",
+  "features": {
+    "ghcr.io/devcontainers/features/git:1": {},
+    "ghcr.io/devcontainers/features/github-cli:1": {},
+    "ghcr.io/devcontainers-contrib/features/task:1": {},
+    "ghcr.io/devcontainers-contrib/features/pre-commit:2": {}
+  },
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "python.defaultInterpreterPath": "/app/.venv/bin/python",
+        "python.formatting.provider": "none",
+        "[python]": {
+          "editor.defaultFormatter": "charliermarsh.ruff",
+          "editor.formatOnSave": true,
+          "editor.codeActionsOnSave": {
+            "source.fixAll.ruff": "explicit",
+            "source.organizeImports.ruff": "explicit"
+          }
+        },
+        "python.testing.pytestArgs": [
+          "tests"
+        ],
+        "python.testing.unittestEnabled": false,
+        "python.testing.pytestEnabled": true,
+        "python.linting.enabled": false,
+        "python.analysis.typeCheckingMode": "basic",
+        "editor.rulers": [120]
+      },
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "charliermarsh.ruff",
+        "tamasfe.even-better-toml",
+        "redhat.vscode-yaml",
+        "ms-azuretools.vscode-docker",
+        "GitHub.vscode-pull-request-github",
+        "GitHub.copilot"
+      ]
+    }
+  },
+  "postCreateCommand": "cd /workspace && task init",
+  "postStartCommand": "git config --global --add safe.directory /workspace",
+  "containerEnv": {
+    "DEV_MODE": "true",
+    "PYTHONPATH": "/workspace/src"
+  },
+  "remoteUser": "root"
+}

@@ -184,6 +184,61 @@ tasks:
       # rebuild the builder instance, updating its BuildKit. There's no harm in running this even if we didn't do the `docker buildx rm` previously
       - task: init-docker-multiplatform
 
+  dev-container:
+    desc: Build and start development container
+    vars:
+      TIMESTAMP:
+        sh: '{{ '{{.RUN_SCRIPT}}' }} {{ '{{.SCRIPTS_DIR}}' }}/get_rfc3339_timestamp.py'
+      COMMIT_HASH:
+        sh: git rev-parse HEAD
+      DESCRIPTION: "{{ cookiecutter.project_short_description | replace('"', '\\"') | replace("'", "\\\\'") }}"
+    cmds:
+      # Stop any existing container
+      - docker stop {{ '{{.PROJECT_SLUG}}' }}-dev 2>/dev/null || true
+      - docker rm {{ '{{.PROJECT_SLUG}}' }}-dev 2>/dev/null || true
+      # Build the dev image
+      - |
+        docker buildx build \
+          --platform {{ '{{.LOCAL_PLATFORM}}' }} \
+          --load \
+          --target builder \
+          --build-arg PYTHON_VERSION="{{ '{{.PYTHON_VERSION}}' }}" \
+          --build-arg DEV_MODE="true" \
+          --build-arg NAME="{{ '{{.PROJECT_SLUG}}' }}" \
+          --build-arg DESCRIPTION="{{ '{{.DESCRIPTION}}' }}" \
+          --build-arg TIMESTAMP="{{ '{{.TIMESTAMP}}' }}" \
+          --build-arg COMMIT_HASH="{{ '{{.COMMIT_HASH}}' }}" \
+          -t {{ '{{.IMAGE_NAME}}' }}-dev:latest \
+          .
+      # Start the container in detached mode
+      - |
+        docker run -d \
+          --name {{ '{{.PROJECT_SLUG}}' }}-dev \
+          -v "$(pwd):/workspace:cached" \
+          -v "{{ '{{.PROJECT_SLUG}}' }}-uv-cache:/root/.cache/uv" \
+          -e DEV_MODE=true \
+          -e PYTHONPATH=/workspace/src \
+          --network host \
+          --cap-add SYS_PTRACE \
+          --security-opt seccomp=unconfined \
+          {{ '{{.IMAGE_NAME}}' }}-dev:latest \
+          sleep infinity
+      - |
+        echo "✅ Development container '{{ '{{.PROJECT_SLUG}}' }}-dev' is running!"
+        echo ""
+        echo "To attach to it:"
+        echo "  • VS Code: Use 'Dev Containers: Attach to Running Container' command"
+        echo "  • Terminal: docker exec -it {{ '{{.PROJECT_SLUG}}' }}-dev bash"
+        echo ""
+        echo "To stop it: task dev-container-stop"
+
+  dev-container-stop:
+    desc: Stop and remove development container
+    cmds:
+      - docker stop {{ '{{.PROJECT_SLUG}}' }}-dev 2>/dev/null || true
+      - docker rm {{ '{{.PROJECT_SLUG}}' }}-dev 2>/dev/null || true
+      - echo "Development container stopped and removed."
+
   clean:
     desc: Clean up build artifacts, cache files/directories, temp files, etc.
     cmds:
