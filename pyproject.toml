@@ -1,6 +1,6 @@
 [project]
 name = "ai-native-python"
-version = "0.3.0"
+version = "0.3.1"
 description = "The AI-Native python paved road generator"
 authors = [
     { name = "Zenable", email = "Python@zenable.io" }
