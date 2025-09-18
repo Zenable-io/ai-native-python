@@ -50,6 +50,50 @@ This project is configured with automated dependency management:
 
 Both tools are pre-configured and will start working once the repository is pushed to GitHub.
 
+## Development Containers
+
+This project includes Dev Container support for consistent development environments.
+
+### Quick Start with VS Code
+
+1. Install the [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
+2. Open this project in VS Code
+3. Click "Reopen in Container" when prompted, or use the command palette: `Dev Containers: Reopen in Container`
+
+### Alternative: Attach to Running Container
+
+If you prefer to manage the container manually:
+
+```bash
+# Build and start the development container
+task dev-container
+
+# Check container status
+task dev-container-status
+
+# Access the container shell
+task dev-container-shell
+
+# Run a specific command in the container
+task dev-container-exec CMD="python --version"
+
+# Stop the container when done
+task dev-container-stop
+```
+
+To attach from VS Code: Use command palette `Dev Containers: Attach to Running Container` and select `{{ cookiecutter.project_slug }}-dev`.
+
+### What's Included
+
+The development container provides:
+- Python {{ cookiecutter.python_version }}+ with all project dependencies
+- Development tools: uv, Task, pre-commit, git
+- VS Code extensions for Python development
+- Live code editing with proper volume mounts
+- All dependencies installed (including dev dependencies)
+
+For more details, see [.devcontainer/README.md](.devcontainer/README.md).
+
 ## FAQs
 
 For frequently asked questions including release workflow troubleshooting, see our [FAQ documentation](./FAQ.md).
