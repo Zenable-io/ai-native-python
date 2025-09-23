@@ -211,6 +211,53 @@ def test_autofix_hook(cookies, context):
             pytest.fail(f"stdout: {error.stdout.decode('utf-8')}, stderr: {error.stderr.decode('utf-8')}")
 
 
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    "invalid_name",
+    [
+        "123invalid",  # starts with number
+        "_invalid",  # starts with underscore
+        "-invalid",  # starts with dash
+        "9project",  # starts with number
+        "!invalid",  # starts with special character
+    ],
+)
+def test_invalid_project_name_validation(cookies, invalid_name):
+    """
+    Test that project names starting with non-alphabetical characters are rejected
+    """
+    result = cookies.bake(extra_context={"project_name": invalid_name})
+
+    # The generation should fail due to validation
+    assert result.exit_code != 0, f"Expected validation failure for project name: {invalid_name}"
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    "valid_name",
+    [
+        "ValidProject",  # starts with uppercase
+        "validproject",  # starts with lowercase
+        "My Project",  # starts with uppercase, has space
+        "a1234",  # starts with lowercase, has numbers
+        "Z_project",  # starts with uppercase, has underscore
+    ],
+)
+def test_valid_project_name_validation(cookies, valid_name):
+    """
+    Test that valid project names starting with alphabetical characters are accepted
+    """
+    # Turn off the post generation hooks for faster testing
+    os.environ["RUN_POST_HOOK"] = "false"
+
+    result = cookies.bake(extra_context={"project_name": valid_name})
+
+    # The generation should succeed
+    assert result.exit_code == 0, f"Expected validation success for project name: {valid_name}"
+    assert result.exception is None
+    assert result.project_path.is_dir()
+
+
 @pytest.mark.integration
 @pytest.mark.slow
 def test_default_project(cookies):
