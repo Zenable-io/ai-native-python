@@ -39,7 +39,9 @@ markers = [
 
 [tool.uv]
 managed = true
-dev-dependencies = [
+
+[dependency-groups]
+dev = [
     "coverage",
     "pre-commit",
     "pydantic>=2.0.0",
