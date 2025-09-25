@@ -60,7 +60,9 @@ markers = [
 
 [tool.uv]
 managed = true
-dev-dependencies = [
+
+[dependency-groups]
+dev = [
     "cookiecutter",
     "coverage",
     "gitpython",
