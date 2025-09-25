@@ -1,8 +1,12 @@
 ---
 exclude: '^{{cookiecutter\.project_name\|replace\(" ", ""\)}}/.*'
 repos:
+ - repo: https://github.com/Zenable-io/ai-native-python
+   rev: f82f8347b11ff10a809e0f7192029c0de55ebffc  # frozen: v0.2.0
+   hooks:
+     - id: zenable-check
  - repo: https://github.com/astral-sh/ruff-pre-commit
-   rev: 0acff885bcb16381b67930fefb91e460202f172c  # frozen: v0.12.10
+   rev: db90487f48a9dd992d243ef63c156eaffddeaf28  # frozen: v0.12.11
    hooks:
      - id: ruff-check
        types_or: [ python, pyi, jupyter ]
@@ -24,7 +28,7 @@ repos:
     - id: end-of-file-fixer
     - id: trailing-whitespace
  - repo: https://github.com/lycheeverse/lychee
-   rev: cef607cddb6279091869bcbb8fb4b906fd4c046c  # frozen: nightly
+   rev: ab5026be0f651c65826148206f845cbfabdd840d  # frozen: nightly
    hooks:
      - id: lychee-docker
        # Keep all other configs in the config file
