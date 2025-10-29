@@ -1,7 +1,7 @@
 # Contributing
 
 To contribute to this project, please consider starting by [opening an issue](https://github.com/Zenable-io/ai-native-python/issues/new) to discuss the feature
-and its design, and reviewing our Contributors Code of Conduct [here](./.github/CODE_OF_CONDUCT.md).
+and its design.
 
 Once you are ready to submit your contribution, please fork the repository and open a pull request with your changes.
 
