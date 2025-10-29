@@ -76,7 +76,7 @@ jobs:
       - name: Set env var for unique artifact uploads
         run: echo SANITIZED_PLATFORM="$(echo "${{ "{{ matrix.platform }}" }}" | sed 's/\//_/g')" | tee -a "${GITHUB_ENV}"
       - name: Upload SBOM artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: sbom-${{ "{{ env.SANITIZED_PLATFORM }}" }}
           path: |
@@ -87,7 +87,7 @@ jobs:
         env:
           PLATFORM: ${{ "{{ matrix.platform }}" }}
       - name: Upload license check results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: license-check-${{ "{{ env.SANITIZED_PLATFORM }}" }}
           path: license-check.*.json
@@ -97,7 +97,7 @@ jobs:
         env:
           PLATFORM: ${{ "{{ matrix.platform }}" }}
       - name: Upload vulnerability scan results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: vulns-${{ "{{ env.SANITIZED_PLATFORM }}" }}
           path: vulns.*.json
