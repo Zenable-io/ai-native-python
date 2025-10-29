@@ -31,7 +31,7 @@ runs:
         python-version: ${{ inputs.python-version }}
 
     - name: Install Task
-      uses: arduino/setup-task@v2
+      uses: go-task/setup-task@v1
       with:
         # Passing a repo token reduces the likelihood of API rate limit exceeded
         repo-token: ${{ inputs.token }}
