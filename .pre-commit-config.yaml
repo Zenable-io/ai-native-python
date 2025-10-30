@@ -24,7 +24,7 @@ repos:
     - id: end-of-file-fixer
     - id: trailing-whitespace
  - repo: https://github.com/lycheeverse/lychee
-   rev: cef607cddb6279091869bcbb8fb4b906fd4c046c  # frozen: nightly
+   rev: 8096a569622a990a1c47c755440106a968c6436d  # frozen: nightly
    hooks:
      - id: lychee-docker
        # Keep all other configs in the config file
@@ -40,7 +40,7 @@ repos:
      - id: shellcheck
        args: [ -x, --source-path=SCRIPTDIR ]
  - repo: https://github.com/trufflesecurity/trufflehog
-   rev: ad6fc8fb446b8fafbf7ea8193d2d6bfd42f45690  # frozen: v3.90.11
+   rev: b84c3d14d189e16da175e2c27fa8136603783ffc  # frozen: v3.90.12
    hooks:
      - id: trufflehog
        # Check the past 2 commits; it's useful to make this go further back than main when running this where main and HEAD are equal
@@ -50,7 +50,7 @@ repos:
    hooks:
     - id: openapi-spec-validator
  - repo: https://github.com/streetsidesoftware/cspell-cli
-   rev: 3749de0c02b93bbbe0eae9d7d72da1ecf3c7a2e0  # frozen: v9.2.0
+   rev: 70665613efaf8b87136b50dc1a10daa2ac3e30e2  # frozen: v9.2.1
    hooks:
      - id: cspell
        types: [markdown]
