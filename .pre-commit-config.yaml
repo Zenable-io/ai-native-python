@@ -2,7 +2,7 @@
 exclude: '^{{cookiecutter\.project_name\|replace\(" ", ""\)}}/.*'
 repos:
  - repo: https://github.com/astral-sh/ruff-pre-commit
-   rev: 3db93a2be6f214ed722bf7bce095ec1b1715422a  # frozen: v0.14.2
+   rev: 36243b70e5ce219623c3503f5afba0f8c96fda55  # frozen: v0.14.7
    hooks:
      - id: ruff-check
        types_or: [ python, pyi, jupyter ]
@@ -24,14 +24,14 @@ repos:
     - id: end-of-file-fixer
     - id: trailing-whitespace
  - repo: https://github.com/lycheeverse/lychee
-   rev: cef607cddb6279091869bcbb8fb4b906fd4c046c  # frozen: nightly
+   rev: caf63cc9e583844a93d636a4f9d7f63d93f65151  # frozen: nightly
    hooks:
      - id: lychee-docker
        # Keep all other configs in the config file
        args: ["--config", ".github/linters/lychee.toml"]
        types: [markdown]
  - repo: https://github.com/rhysd/actionlint
-   rev: e7d448ef7507c20fc4c88a95d0c448b848cd6127  # frozen: v1.7.8
+   rev: a443f344ff32813837fa49f7aa6cbc478d770e62  # frozen: v1.7.9
    hooks:
      - id: actionlint-docker
  - repo: https://github.com/koalaman/shellcheck-precommit
@@ -40,7 +40,7 @@ repos:
      - id: shellcheck
        args: [ -x, --source-path=SCRIPTDIR ]
  - repo: https://github.com/trufflesecurity/trufflehog
-   rev: ad6fc8fb446b8fafbf7ea8193d2d6bfd42f45690  # frozen: v3.90.11
+   rev: 821e8b9e5cdf8dc484dd23e06f78941fcf6b9191  # frozen: v3.91.2
    hooks:
      - id: trufflehog
        # Check the past 2 commits; it's useful to make this go further back than main when running this where main and HEAD are equal
@@ -50,7 +50,7 @@ repos:
    hooks:
     - id: openapi-spec-validator
  - repo: https://github.com/streetsidesoftware/cspell-cli
-   rev: 3749de0c02b93bbbe0eae9d7d72da1ecf3c7a2e0  # frozen: v9.2.0
+   rev: 444d212ae804f5d3c0723a33ebb7719e223a07ab  # frozen: v9.3.3
    hooks:
      - id: cspell
        types: [markdown]
