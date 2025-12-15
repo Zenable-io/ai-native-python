@@ -80,7 +80,7 @@ jobs:
       - name: Run SBOM generation
         run: task -v sbom
       - name: Upload SBOM artifacts
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: sbom-files
           path: |
@@ -89,7 +89,7 @@ jobs:
       - name: Check license compliance
         run: task -v license-check
       - name: Upload license check results
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: license-check-results
           path: license-check.json
@@ -97,7 +97,7 @@ jobs:
       - name: Run vulnerability scan
         run: task -v vulnscan
       - name: Upload vulnerability scan results
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: vuln-scan-results
           path: vulns.json
