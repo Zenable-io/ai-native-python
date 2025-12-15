@@ -33,7 +33,7 @@ jobs:
       - name: Update the repository
         run: task -v update
       - name: Create or update a pull request
-        uses: peter-evans/create-pull-request@v7
+        uses: peter-evans/create-pull-request@v8
         with:
           title: 'fix(updates): automated updates of primary components'
           commit-message: Automated update to primary components
