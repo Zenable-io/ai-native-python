@@ -29,7 +29,7 @@ For more details, see our [documentation](docs/index.md).
 
     ```bash
     # Install the prerequisites
-    brew install uv
+    brew install uv go-task
 
     # Initialize your project
     uvx --with gitpython cookiecutter gh:zenable-io/ai-native-python
