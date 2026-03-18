@@ -84,4 +84,15 @@ logger = logging.getLogger(__name__)
 from typing import Optional, List, Dict
 def process_data(items: List[Dict[str, Any]]) -> Optional[str]:
     ...
+
+# URL parameter validation (required pattern)
+def parse_positive_int_param(value: Optional[str], name: str) -> int:
+    """Validate and parse a URL parameter as a positive integer."""
+    try:
+        parsed = int(value)  # type: ignore[arg-type]
+        if parsed <= 0:
+            raise ValueError(f"{name} must be positive")
+        return parsed
+    except (ValueError, TypeError):
+        raise ValueError(f"Invalid {name}: expected a positive integer")
 ```

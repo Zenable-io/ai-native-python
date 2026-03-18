@@ -5,6 +5,12 @@ and its design.
 
 Once you are ready to submit your contribution, please fork the repository and open a pull request with your changes.
 
+**Before submitting a PR:**
+- Run `task test` and ensure all tests pass
+- Update tests for any methods/subroutines you modify
+- Validate URL parameters before parsing (use bounds checking, not bare `int()` or `parseInt()`)
+- Do not commit secrets, credentials, or hardcoded tokens
+
 ## Updating the dependencies
 
 ```bash
