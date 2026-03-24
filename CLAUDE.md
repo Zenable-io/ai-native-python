@@ -81,32 +81,11 @@ Common cookiecutter variables:
 
 ## Error Patterns to Avoid
 
-```python
-# BAD: Using os.path
-import os
-file_path = os.path.join(os.getcwd(), "file.txt")
-
-# GOOD: Using pathlib
-from pathlib import Path
-file_path = Path.cwd() / "file.txt"
-
-# BAD: Print for logging
-print(f"Error: {error}")
-
-# GOOD: Proper logging
-import logging
-logger = logging.getLogger(__name__)
-logger.error(f"Operation failed: {error}")
-
-# BAD: Generic exceptions
-except Exception:
-    pass
-
-# GOOD: Specific handling
-except FileNotFoundError as e:
-    logger.error(f"Configuration file not found: {e}")
-    raise
-```
+| BAD | GOOD |
+|-----|------|
+| `os.path.join(os.getcwd(), "file.txt")` | `Path.cwd() / "file.txt"` (use `pathlib`) |
+| `print(f"Error: {error}")` | `logger.error(f"Operation failed: {error}")` (use `logging`) |
+| `except Exception: pass` | `except FileNotFoundError as e: logger.error(...); raise` |
 
 ## Testing Guidelines
 
