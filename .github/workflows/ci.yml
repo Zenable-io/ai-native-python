@@ -102,6 +102,89 @@ jobs:
           name: vuln-scan-results
           path: vulns.json
           if-no-files-found: error
+  windows-smoke-test:
+    name: Windows Smoke Test
+    runs-on: windows-latest
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: 'false'
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          python-version: ${{ env.python_version }}
+      - name: Install Task
+        uses: go-task/setup-task@v1
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Generate project from template
+        shell: pwsh
+        env:
+          RUN_POST_HOOK: 'true'
+          SKIP_GIT_PUSH: 'true'
+        run: |
+          # Configure git identity for the post-gen commit
+          git config --global user.name "CI Automation"
+          git config --global user.email "ci@zenable.io"
+
+          # Generate a project with all defaults using cookiecutter
+          uvx --with gitpython cookiecutter . --no-input --output-dir "$env:RUNNER_TEMP"
+      - name: Verify generated project
+        shell: pwsh
+        run: |
+          $project = Join-Path $env:RUNNER_TEMP "replace-me"
+
+          # Verify the project directory was created
+          if (-not (Test-Path $project)) {
+            Write-Error "Project directory not found at $project"
+            exit 1
+          }
+
+          # Verify key files exist
+          $requiredFiles = @(
+            "pyproject.toml",
+            "Taskfile.yml",
+            "Dockerfile",
+            "CLAUDE.md",
+            ".github/project.yml",
+            ".github/workflows/ci.yml"
+          )
+          foreach ($file in $requiredFiles) {
+            $filePath = Join-Path $project $file
+            if (-not (Test-Path $filePath)) {
+              Write-Error "Required file missing: $file"
+              exit 1
+            }
+          }
+
+          # Verify no unrendered cookiecutter variables remain
+          $pattern = '\{\{\s*cookiecutter\.'
+          $matches = Get-ChildItem -Path $project -Recurse -File -Exclude '.git' |
+            Where-Object { $_.FullName -notmatch '[\\/]\.git[\\/]' } |
+            Select-String -Pattern $pattern
+          if ($matches) {
+            Write-Error "Unrendered cookiecutter variables found:"
+            $matches | ForEach-Object { Write-Error $_.ToString() }
+            exit 1
+          }
+
+          # Verify git repo was initialized and has a commit
+          $gitDir = Join-Path $project ".git"
+          if (-not (Test-Path $gitDir)) {
+            Write-Error "Git repository not initialized"
+            exit 1
+          }
+
+          Push-Location $project
+          $commitCount = git rev-list --count HEAD 2>$null
+          Pop-Location
+          if ($commitCount -lt 1) {
+            Write-Error "No commits found in generated project"
+            exit 1
+          }
+
+          Write-Host "Windows smoke test passed: project generated and verified successfully"
   finalizer:
     # This gives us something to set as required in the repo settings. Some projects use dynamic fan-outs using matrix strategies and the fromJSON function, so
     # you can't hard-code what _should_ run vs not. Having a finalizer simplifies that so you can just check that the finalizer succeeded, and if so, your
@@ -110,7 +193,7 @@ jobs:
     name: Finalize the pipeline
     runs-on: ubuntu-24.04
     # Keep this aligned with the above jobs
-    needs: [lint, test]
+    needs: [lint, test, windows-smoke-test]
     if: always()  # Ensure it runs even if "needs" fails or is cancelled
     steps:
       - name: Check for failed or cancelled jobs

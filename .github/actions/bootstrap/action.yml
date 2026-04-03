@@ -16,12 +16,20 @@ inputs:
 runs:
   using: 'composite'
   steps:
-    - name: Create run_script for running scripts downstream
+    - name: Create run_script for running scripts downstream (Unix)
+      if: runner.os != 'Windows'
       shell: 'bash --noprofile --norc -Eeuo pipefail {0}'
       working-directory: ${{ inputs.working-directory }}
       run: |
         run_script="uv run --frozen"
         echo "run_script=${run_script}" | tee -a "${GITHUB_ENV}"
+
+    - name: Create run_script for running scripts downstream (Windows)
+      if: runner.os == 'Windows'
+      shell: pwsh
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        echo "run_script=uv run --frozen" | Tee-Object -Append $env:GITHUB_ENV
 
     - name: Setup uv
       uses: astral-sh/setup-uv@v4
@@ -37,6 +45,7 @@ runs:
         repo-token: ${{ inputs.token }}
 
     - name: Add Homebrew to the path
+      if: runner.os != 'Windows'
       shell: 'bash --noprofile --norc -Eeuo pipefail {0}'
       # This ensures compatibility with macOS runners and Linux runners with Homebrew
       run: |
@@ -68,15 +77,29 @@ runs:
       working-directory: ${{ inputs.working-directory }}
 
     - name: Install trufflehog
+      if: runner.os != 'Windows'
       shell: 'bash --noprofile --norc -Eeuo pipefail {0}'
       run: |
         curl -sSfL https://raw.githubusercontent.com/trufflesecurity/trufflehog/main/scripts/install.sh | sh -s -- -b /usr/local/bin
 
-    - name: Set Python hash for caching
+    - name: Set Python hash for caching (Unix)
+      if: runner.os != 'Windows'
       shell: 'bash --noprofile --norc -Eeuo pipefail {0}'
       run: |
         # Create a hash of the Python version for better cache keys
         echo "PY=$(python -VV | sha256sum | cut -d' ' -f1)" | tee -a "${GITHUB_ENV}"
+
+    - name: Set Python hash for caching (Windows)
+      if: runner.os == 'Windows'
+      shell: pwsh
+      run: |
+        $pyVersion = python -VV 2>&1
+        $hash = [System.BitConverter]::ToString(
+          [System.Security.Cryptography.SHA256]::Create().ComputeHash(
+            [System.Text.Encoding]::UTF8.GetBytes($pyVersion)
+          )
+        ).Replace("-", "").ToLower()
+        echo "PY=$hash" | Tee-Object -Append $env:GITHUB_ENV
 
     - name: Cache pre-commit environments
       uses: actions/cache@v4
@@ -84,7 +107,14 @@ runs:
         path: ~/.cache/pre-commit
         key: pre-commit|${{ env.PY }}|${{ hashFiles(format('{0}/.pre-commit-config.yaml', inputs.working-directory)) }}
 
-    - name: Initialize the repository
+    - name: Initialize the repository (Unix)
+      if: runner.os != 'Windows'
       working-directory: ${{ inputs.working-directory }}
       shell: 'bash --noprofile --norc -Eeuo pipefail {0}'
+      run: task -v init
+
+    - name: Initialize the repository (Windows)
+      if: runner.os == 'Windows'
+      working-directory: ${{ inputs.working-directory }}
+      shell: pwsh
       run: task -v init
