@@ -128,17 +128,32 @@ jobs:
           git config --global user.name "CI Automation"
           git config --global user.email "ci@zenable.io"
 
-          # The cookiecutter template directory name contains characters that
-          # are illegal on NTFS (double quotes, pipe). Use Git Bash (available
-          # on all Windows runners) which operates on a POSIX compatibility
-          # layer where these characters are valid.
+          # The template directory name contains NTFS-illegal characters
+          # (double quotes, pipe). Download and extract the zip, then rename
+          # the template directory to be NTFS-safe. Cookiecutter identifies
+          # the template dir by matching {{cookiecutter.* so the renamed dir
+          # must still start with that prefix.
           zipUrl="https://github.com/${{ github.repository }}/archive/${TEMPLATE_REF}.zip"
           tmpdir=$(mktemp -d)
           curl -fsSL "$zipUrl" -o "$tmpdir/template.zip"
           unzip -q "$tmpdir/template.zip" -d "$tmpdir/src"
-          templateDir="$tmpdir/src/$(ls "$tmpdir/src")"
+          repoDir="$tmpdir/src/$(ls "$tmpdir/src")"
 
-          uvx --with gitpython cookiecutter "$templateDir" --no-input --output-dir "$RUNNER_TEMP"
+          # Rename the template dir to remove NTFS-illegal chars.
+          # Cookiecutter matches dirs starting with "{{cookiecutter." and
+          # renders the name as a Jinja2 expression for the output dir.
+          # {{cookiecutter.project_name}} renders identically to the original
+          # with replace(" ", "") since the default has no spaces.
+          cd "$repoDir"
+          for d in *; do
+            if [[ "$d" == *'cookiecutter.'* ]]; then
+              mv "$d" '{{cookiecutter.project_name}}'
+              break
+            fi
+          done
+          cd -
+
+          uvx --with gitpython cookiecutter "$repoDir" --no-input --output-dir "$RUNNER_TEMP"
       - name: Verify generated project
         shell: pwsh
         run: |
