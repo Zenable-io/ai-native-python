@@ -140,21 +140,23 @@ jobs:
           python -c @"
           import zipfile, os, sys
           zf = zipfile.ZipFile(sys.argv[1])
-          dest = sys.argv[2]
-          # Use extended-length path prefix to bypass NTFS char restrictions
-          if os.name == 'nt':
-              dest = '\\\\?\\' + os.path.abspath(dest)
+          raw_dest = sys.argv[2]
+          # Use extended-length path prefix to bypass NTFS char restrictions.
+          # The prefix requires backslashes and no trailing slashes.
+          prefix = '\\\\?\\' + os.path.abspath(raw_dest) if os.name == 'nt' else raw_dest
           for info in zf.infolist():
-              target = os.path.join(dest, info.filename)
+              # Normalize zip forward slashes to OS path separators
+              clean = info.filename.replace('/', os.sep).rstrip(os.sep)
+              target = os.path.join(prefix, clean)
               if info.is_dir():
                   os.makedirs(target, exist_ok=True)
               else:
                   os.makedirs(os.path.dirname(target), exist_ok=True)
                   with zf.open(info) as src, open(target, 'wb') as dst:
                       dst.write(src.read())
-          # Print the top-level directory (without the \\?\ prefix)
-          raw_dest = sys.argv[2]
-          print(os.path.join(raw_dest, os.listdir(dest)[0]))
+          # Print the top-level directory (without the \\?\ prefix for downstream use)
+          top = os.listdir(prefix)[0]
+          print(os.path.join(raw_dest, top))
           "@ $zipPath $extractDir | Set-Variable templateDir
 
           uvx --with gitpython cookiecutter $templateDir.Trim() --no-input --output-dir "$env:RUNNER_TEMP"
