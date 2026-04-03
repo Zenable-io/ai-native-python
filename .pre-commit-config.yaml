@@ -43,8 +43,10 @@ repos:
    rev: ad6fc8fb446b8fafbf7ea8193d2d6bfd42f45690  # frozen: v3.90.11
    hooks:
      - id: trufflehog
-       # Check the past 2 commits; it's useful to make this go further back than main when running this where main and HEAD are equal
-       entry: trufflehog git file://. --since-commit main~1 --no-verification --fail
+       # Resolve the repo root via git-common-dir so this works in both normal repos and worktrees
+       # (trufflehog doesn't support .git files used by worktrees)
+       language: system
+       entry: bash -c 'trufflehog git "file://$(cd "$(git rev-parse --git-common-dir)/.." && pwd)" --branch "$(git rev-parse --abbrev-ref HEAD)" --since-commit main~1 --no-verification --fail'
  - repo: https://github.com/python-openapi/openapi-spec-validator
    rev: a76da2ffdaf698a7fdbd755f89b051fef4c790fd  # frozen: 0.8.0b1
    hooks:

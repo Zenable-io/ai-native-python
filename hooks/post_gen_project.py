@@ -141,30 +141,102 @@ def notify_dockerhub_secrets() -> None:
     print("=" * 70 + "\n")
 
 
-def opportunistically_install_zenable_tools() -> None:
-    """Opportunistically install zenable-mcp if uvx is available."""
-    # Check if uvx is not available
-    if not shutil.which("uvx"):
-        # uvx is not available, notify the user
-        print("\n" + "=" * 70)
-        print("NOTE: Skipped configuring the Zenable AI coding guardrails")
-        print("=" * 70)
-        print("\nConfiguring the Zenable AI coding guardrails requires the uv package manager.")
-        print("To set this up later:")
-        print("\n1. Install uv via https://docs.astral.sh/uv/getting-started/installation/")
-        print("2. Run: uvx zenable-mcp@latest install")
-        print("=" * 70 + "\n")
+def _find_zenable_binary() -> str | None:
+    """Find the zenable binary in PATH or the default install location."""
+    zenable_path = shutil.which("zenable")
+    if zenable_path:
+        return zenable_path
 
-        LOG.warning("uvx was not found in PATH, so the Zenable integrations were not installed.")
-        return
+    # Check the default install location
+    default_path = Path.home() / ".zenable" / "bin" / "zenable"
+    if default_path.is_file():
+        return str(default_path)
 
-    # uvx is available, attempt to install zenable-mcp
-    LOG.debug("uvx is available in PATH, attempting to install the Zenable tools...")
+    return None
+
+
+def _download_install_script() -> bytes:
+    """Download the Zenable install script, trying curl then wget."""
+    url = "https://cli.zenable.app/install.sh"
+
+    if shutil.which("curl"):
+        result = subprocess.run(
+            ["curl", "-fsSL", url],
+            check=True,
+            capture_output=True,
+            timeout=60,
+        )
+        return result.stdout
+
+    if shutil.which("wget"):
+        result = subprocess.run(
+            ["wget", "-qO-", url],
+            check=True,
+            capture_output=True,
+            timeout=60,
+        )
+        return result.stdout
+
+    msg = "Neither curl nor wget is available"
+    raise FileNotFoundError(msg)
+
+
+def _install_zenable_binary() -> bool:
+    """Install the zenable CLI binary for macOS/Linux.
+
+    Runs non-interactively via ZENABLE_YES=1 so no prompts appear during
+    cookiecutter project generation.
+
+    Returns True if installation succeeded, False otherwise.
+    """
+    env = {**os.environ, "ZENABLE_YES": "1"}
+
     try:
-        subprocess.run(["uvx", "zenable-mcp@latest", "install"], check=True, timeout=60)
+        install_script = _download_install_script()
+        subprocess.run(
+            ["bash"],
+            input=install_script,
+            check=True,
+            capture_output=True,
+            timeout=120,
+            env=env,
+        )
+        return True
+    except Exception:
+        LOG.warning("Failed to install the Zenable CLI binary")
+        return False
+
+
+def opportunistically_install_zenable_tools() -> None:
+    """Opportunistically install the Zenable CLI and configure IDE integrations."""
+    zenable_bin = _find_zenable_binary()
+
+    if not zenable_bin:
+        LOG.debug("Zenable CLI not found, attempting to install...")
+        if not _install_zenable_binary():
+            print("\n" + "=" * 70)
+            print("NOTE: Skipped configuring the Zenable AI coding guardrails")
+            print("=" * 70)
+            print("\nTo set this up later, install the Zenable CLI:")
+            print("\n  curl -fsSL https://cli.zenable.app/install.sh | bash")
+            print("\nThen run: zenable install")
+            print("=" * 70 + "\n")
+
+            LOG.warning("Zenable CLI could not be installed.")
+            return
+
+        zenable_bin = _find_zenable_binary()
+        if not zenable_bin:
+            LOG.warning("Zenable CLI was installed but could not be found in PATH or default location.")
+            return
+
+    # Zenable CLI is available, attempt to configure IDE integrations
+    LOG.debug("Zenable CLI found at %s, configuring IDE integrations...", zenable_bin)
+    try:
+        subprocess.run([zenable_bin, "install"], check=True, timeout=60)
         print("\n" + "=" * 70)
         print("Successfully configured the Zenable AI coding guardrails 🚀")
-        print("To start using it, just open the IDE of your choice, login to the MCP server, and you're all set 🤖")
+        print("To start using it, just open the IDE of your choice, login, and you're all set 🤖")
         print("Learn more at https://docs.zenable.io")
         print("=" * 70 + "\n")
     except Exception:
@@ -174,7 +246,7 @@ def opportunistically_install_zenable_tools() -> None:
         print("WARNING: Failed to configure the Zenable AI coding guardrails")
         print("=" * 70)
         print("You can retry it later by running:")
-        print("\n  uvx zenable-mcp@latest install")
+        print("\n  zenable install")
         print("\nTo report issues, please contact:")
         print("  • https://zenable.io/feedback")
         print("  • support@zenable.io")
