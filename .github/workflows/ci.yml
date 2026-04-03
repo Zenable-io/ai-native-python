@@ -129,37 +129,28 @@ jobs:
           git config --global user.email "ci@zenable.io"
 
           # The template directory name contains NTFS-illegal characters
-          # (double quotes, pipe). Download and extract the zip, then rename
-          # the template directory to be NTFS-safe. Cookiecutter identifies
-          # the template dir by matching {{cookiecutter.* so the renamed dir
-          # must still start with that prefix.
+          # (double quotes, pipe). Use Python to extract the zip, renaming
+          # the template dir to {{cookiecutter.project_name}} which is
+          # NTFS-safe and renders identically for defaults (no spaces).
           zipUrl="https://github.com/${{ github.repository }}/archive/${TEMPLATE_REF}.zip"
           tmpdir=$(mktemp -d)
           curl -fsSL "$zipUrl" -o "$tmpdir/template.zip"
-          unzip -q "$tmpdir/template.zip" -d "$tmpdir/src"
-          repoDir="$tmpdir/src/$(ls "$tmpdir/src")"
 
-          # Rename the template dir to remove NTFS-illegal chars.
-          # Cookiecutter matches dirs starting with "{{cookiecutter." and
-          # renders the name as a Jinja2 expression for the output dir.
-          # {{cookiecutter.project_name}} renders identically to the original
-          # with replace(" ", "") since the default has no spaces.
-          cd "$repoDir"
-          echo "=== Template dir contents ==="
-          ls -la
-          echo "=== Looking for cookiecutter template dir ==="
-          for d in *; do
-            echo "  checking: $d"
-            if [[ "$d" == *'cookiecutter.'* ]]; then
-              echo "  FOUND template dir: $d"
-              mv "$d" '{{cookiecutter.project_name}}'
-              echo "  renamed to: {{cookiecutter.project_name}}"
-              break
-            fi
-          done
-          echo "=== After rename ==="
-          ls -la
-          cd -
+          repoDir=$(python3 -c "
+          import zipfile, os, sys
+          zf, dest = zipfile.ZipFile(sys.argv[1]), sys.argv[2]
+          for info in zf.infolist():
+              parts = info.filename.split('/')
+              safe = [('{{cookiecutter.project_name}}' if '{{cookiecutter.' in p else p) for p in parts]
+              target = os.path.join(dest, *[s for s in safe if s])
+              if info.is_dir():
+                  os.makedirs(target, exist_ok=True)
+              else:
+                  os.makedirs(os.path.dirname(target), exist_ok=True)
+                  with zf.open(info) as s, open(target, 'wb') as d:
+                      d.write(s.read())
+          print(os.path.join(dest, os.listdir(dest)[0]))
+          " "$tmpdir/template.zip" "$tmpdir/src")
 
           uvx --with gitpython cookiecutter "$repoDir" --no-input --output-dir "$RUNNER_TEMP"
       - name: Verify generated project
