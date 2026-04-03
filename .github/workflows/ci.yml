@@ -129,9 +129,10 @@ jobs:
           git config --global user.email "ci@zenable.io"
 
           # The template directory name contains double-quote characters which
-          # are fundamentally illegal on NTFS — git clone and normal extraction
-          # both fail. Extract using Python with the \\?\ extended-length path
-          # prefix, which bypasses NTFS name validation on Windows.
+          # are fundamentally illegal on NTFS. Download the zip and extract with
+          # Python, replacing " with ' in paths during extraction. This is safe
+          # because Jinja2 treats single and double quotes identically, so
+          # replace(" ", "") and replace(' ', '') produce the same output.
           $zipUrl = "https://github.com/${{ github.repository }}/archive/$env:TEMPLATE_REF.zip"
           $zipPath = Join-Path $env:RUNNER_TEMP "template.zip"
           $extractDir = Join-Path $env:RUNNER_TEMP "template-src"
@@ -140,23 +141,19 @@ jobs:
           python -c @"
           import zipfile, os, sys
           zf = zipfile.ZipFile(sys.argv[1])
-          raw_dest = sys.argv[2]
-          # Use extended-length path prefix to bypass NTFS char restrictions.
-          # The prefix requires backslashes and no trailing slashes.
-          prefix = '\\\\?\\' + os.path.abspath(raw_dest) if os.name == 'nt' else raw_dest
+          dest = sys.argv[2]
           for info in zf.infolist():
-              # Normalize zip forward slashes to OS path separators
-              clean = info.filename.replace('/', os.sep).rstrip(os.sep)
-              target = os.path.join(prefix, clean)
+              name = info.filename
+              if os.name == 'nt':
+                  name = name.replace(chr(34), chr(39))
+              target = os.path.join(dest, name.replace('/', os.sep).rstrip(os.sep))
               if info.is_dir():
                   os.makedirs(target, exist_ok=True)
               else:
                   os.makedirs(os.path.dirname(target), exist_ok=True)
                   with zf.open(info) as src, open(target, 'wb') as dst:
                       dst.write(src.read())
-          # Print the top-level directory (without the \\?\ prefix for downstream use)
-          top = os.listdir(prefix)[0]
-          print(os.path.join(raw_dest, top))
+          print(os.path.join(dest, os.listdir(dest)[0]))
           "@ $zipPath $extractDir | Set-Variable templateDir
 
           uvx --with gitpython cookiecutter $templateDir.Trim() --no-input --output-dir "$env:RUNNER_TEMP"
