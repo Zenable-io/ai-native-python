@@ -187,6 +187,10 @@ def _install_zenable_binary() -> bool:
     Runs non-interactively via ZENABLE_YES=1 so no prompts appear during
     cookiecutter project generation.
 
+    The install script (cli.zenable.app/install.sh) verifies the downloaded
+    binary via cosign signature verification and checksum validation before
+    placing it on disk.
+
     Returns True if installation succeeded, False otherwise.
     """
     env = {**os.environ, "ZENABLE_YES": "1"}
