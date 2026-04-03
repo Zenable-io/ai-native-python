@@ -11,9 +11,12 @@
 {{ item }}
 {% endfor %}
 allstar
+conftest
 dependabot
+docstrings
 refurb
 renovatebot
 skopeo
 syft
+taskfile
 zenable

@@ -1,9 +1,11 @@
 allstar
 anchore
 buildx
+conftest
 cookiecutter
 dependabot
 digestabot
+docstrings
 dockerhub
 htmlcov
 pylance
@@ -11,5 +13,6 @@ pythonpath
 refurb
 skopeo
 syft
+taskfile
 zenable
 zizmor
