@@ -106,8 +106,16 @@ jobs:
     name: Windows Smoke Test
     runs-on: windows-latest
     steps:
-      - name: Allow cookiecutter template paths on Windows
-        run: git config --system core.protectNTFS false
+      - name: Configure git for cookiecutter template paths
+        shell: pwsh
+        run: |
+          # The cookiecutter template directory contains pipe/quote characters
+          # that are invalid on NTFS. Write a gitconfig file that disables
+          # NTFS protection and point GIT_CONFIG_GLOBAL at it so the setting
+          # persists through actions/checkout's HOME override.
+          $configPath = Join-Path $env:RUNNER_TEMP "gitconfig-ntfs"
+          "[core]`n  protectNTFS = false" | Out-File -FilePath $configPath -Encoding utf8
+          echo "GIT_CONFIG_GLOBAL=$configPath" | Tee-Object -Append $env:GITHUB_ENV
       - name: Checkout the repository
         uses: actions/checkout@v6
         with:
