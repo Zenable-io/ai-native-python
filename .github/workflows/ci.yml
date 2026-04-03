@@ -129,11 +129,18 @@ jobs:
           git config --global user.email "ci@zenable.io"
 
           # The template directory name contains double-quote characters which
-          # are fundamentally illegal on NTFS — git clone cannot work. Use
-          # cookiecutter's zip download support instead, which extracts via
-          # Python's zipfile module and avoids NTFS path restrictions.
+          # are fundamentally illegal on NTFS — git clone cannot work. Download
+          # the archive and extract it with Python's zipfile (which can write
+          # entries with NTFS-illegal chars because it bypasses Win32 APIs for
+          # internal temp paths). Then run cookiecutter on the extracted tree.
           $zipUrl = "https://github.com/${{ github.repository }}/archive/$env:TEMPLATE_REF.zip"
-          uvx --with gitpython cookiecutter "$zipUrl" --no-input --output-dir "$env:RUNNER_TEMP"
+          $zipPath = Join-Path $env:RUNNER_TEMP "template.zip"
+          $extractDir = Join-Path $env:RUNNER_TEMP "template-src"
+          Invoke-WebRequest -Uri $zipUrl -OutFile $zipPath
+
+          python -c "import zipfile,os,sys; z=zipfile.ZipFile(sys.argv[1]); z.extractall(sys.argv[2]); print(os.path.join(sys.argv[2],os.listdir(sys.argv[2])[0]))" $zipPath $extractDir | Set-Variable templateDir
+
+          uvx --with gitpython cookiecutter $templateDir.Trim() --no-input --output-dir "$env:RUNNER_TEMP"
       - name: Verify generated project
         shell: pwsh
         run: |
