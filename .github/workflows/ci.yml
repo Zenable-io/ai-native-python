@@ -145,12 +145,20 @@ jobs:
           # {{cookiecutter.project_name}} renders identically to the original
           # with replace(" ", "") since the default has no spaces.
           cd "$repoDir"
+          echo "=== Template dir contents ==="
+          ls -la
+          echo "=== Looking for cookiecutter template dir ==="
           for d in *; do
+            echo "  checking: $d"
             if [[ "$d" == *'cookiecutter.'* ]]; then
+              echo "  FOUND template dir: $d"
               mv "$d" '{{cookiecutter.project_name}}'
+              echo "  renamed to: {{cookiecutter.project_name}}"
               break
             fi
           done
+          echo "=== After rename ==="
+          ls -la
           cd -
 
           uvx --with gitpython cookiecutter "$repoDir" --no-input --output-dir "$RUNNER_TEMP"
