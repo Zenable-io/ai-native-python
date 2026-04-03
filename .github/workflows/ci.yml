@@ -123,21 +123,17 @@ jobs:
         env:
           RUN_POST_HOOK: 'true'
           SKIP_GIT_PUSH: 'true'
-          TEMPLATE_BRANCH: ${{ github.head_ref || github.ref_name }}
-          TEMPLATE_REPO: ${{ github.repository }}
-          # The template directory name contains quotes which are illegal on NTFS.
-          # GIT_CONFIG_COUNT/KEY/VALUE injects core.protectNTFS=false into every
-          # git invocation (including cookiecutter's internal git clone) without
-          # needing a config file.
-          GIT_CONFIG_COUNT: '1'
-          GIT_CONFIG_KEY_0: core.protectNTFS
-          GIT_CONFIG_VALUE_0: 'false'
+          TEMPLATE_REF: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
           git config --global user.name "CI Automation"
           git config --global user.email "ci@zenable.io"
 
-          # Cookiecutter fetches the template from the remote branch.
-          uvx --with gitpython cookiecutter "gh:$env:TEMPLATE_REPO" --checkout "$env:TEMPLATE_BRANCH" --no-input --output-dir "$env:RUNNER_TEMP"
+          # The template directory name contains double-quote characters which
+          # are fundamentally illegal on NTFS — git clone cannot work. Use
+          # cookiecutter's zip download support instead, which extracts via
+          # Python's zipfile module and avoids NTFS path restrictions.
+          $zipUrl = "https://github.com/${{ github.repository }}/archive/$env:TEMPLATE_REF.zip"
+          uvx --with gitpython cookiecutter "$zipUrl" --no-input --output-dir "$env:RUNNER_TEMP"
       - name: Verify generated project
         shell: pwsh
         run: |
