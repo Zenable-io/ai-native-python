@@ -107,7 +107,7 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: Allow cookiecutter template paths on Windows
-        run: git config --global core.protectNTFS false
+        run: git config --system core.protectNTFS false
       - name: Checkout the repository
         uses: actions/checkout@v6
         with:
