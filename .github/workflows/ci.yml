@@ -106,20 +106,10 @@ jobs:
     name: Windows Smoke Test
     runs-on: windows-latest
     steps:
-      - name: Configure git for cookiecutter template paths
-        shell: pwsh
-        run: |
-          # The cookiecutter template directory contains pipe/quote characters
-          # that are invalid on NTFS. Write a gitconfig file that disables
-          # NTFS protection and point GIT_CONFIG_GLOBAL at it so the setting
-          # persists through actions/checkout's HOME override.
-          $configPath = Join-Path $env:RUNNER_TEMP "gitconfig-ntfs"
-          "[core]`n  protectNTFS = false" | Out-File -FilePath $configPath -Encoding utf8
-          echo "GIT_CONFIG_GLOBAL=$configPath" | Tee-Object -Append $env:GITHUB_ENV
-      - name: Checkout the repository
-        uses: actions/checkout@v6
-        with:
-          persist-credentials: 'false'
+      # Note: no checkout step. The cookiecutter template directory contains
+      # characters (pipe, quotes) that are illegal on NTFS, so we cannot check
+      # out the repo on Windows. Instead, cookiecutter fetches the template
+      # directly from the remote branch.
       - name: Setup uv
         uses: astral-sh/setup-uv@v4
         with:
@@ -133,13 +123,17 @@ jobs:
         env:
           RUN_POST_HOOK: 'true'
           SKIP_GIT_PUSH: 'true'
+          TEMPLATE_BRANCH: ${{ github.head_ref || github.ref_name }}
+          TEMPLATE_REPO: ${{ github.repository }}
         run: |
           # Configure git identity for the post-gen commit
           git config --global user.name "CI Automation"
           git config --global user.email "ci@zenable.io"
 
-          # Generate a project with all defaults using cookiecutter
-          uvx --with gitpython cookiecutter . --no-input --output-dir "$env:RUNNER_TEMP"
+          # Cookiecutter fetches the template from the remote branch.
+          # This avoids checking out the repo locally, which is impossible on
+          # Windows due to illegal NTFS characters in the template directory name.
+          uvx --with gitpython cookiecutter "gh:$env:TEMPLATE_REPO" --checkout "$env:TEMPLATE_BRANCH" --no-input --output-dir "$env:RUNNER_TEMP"
       - name: Verify generated project
         shell: pwsh
         run: |
