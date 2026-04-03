@@ -44,9 +44,10 @@ repos:
    hooks:
      - id: trufflehog
        # Resolve the repo root via git-common-dir so this works in both normal repos and worktrees
-       # (trufflehog doesn't support .git files used by worktrees)
+       # (trufflehog doesn't support .git files used by worktrees).
+       # Guard against detached HEAD (e.g. CI) by falling back to the commit SHA.
        language: system
-       entry: bash -c 'trufflehog git "file://$(cd "$(git rev-parse --git-common-dir)/.." && pwd)" --branch "$(git rev-parse --abbrev-ref HEAD)" --since-commit main~1 --no-verification --fail'
+       entry: bash -c 'BRANCH=$(git rev-parse --abbrev-ref HEAD); [ "$BRANCH" = "HEAD" ] && BRANCH=$(git rev-parse HEAD); trufflehog git "file://$(cd "$(git rev-parse --git-common-dir)/.." && pwd)" --branch "$BRANCH" --since-commit HEAD~1 --no-verification --fail'
  - repo: https://github.com/python-openapi/openapi-spec-validator
    rev: a76da2ffdaf698a7fdbd755f89b051fef4c790fd  # frozen: 0.8.0b1
    hooks:
