@@ -129,16 +129,33 @@ jobs:
           git config --global user.email "ci@zenable.io"
 
           # The template directory name contains double-quote characters which
-          # are fundamentally illegal on NTFS — git clone cannot work. Download
-          # the archive and extract it with Python's zipfile (which can write
-          # entries with NTFS-illegal chars because it bypasses Win32 APIs for
-          # internal temp paths). Then run cookiecutter on the extracted tree.
+          # are fundamentally illegal on NTFS — git clone and normal extraction
+          # both fail. Extract using Python with the \\?\ extended-length path
+          # prefix, which bypasses NTFS name validation on Windows.
           $zipUrl = "https://github.com/${{ github.repository }}/archive/$env:TEMPLATE_REF.zip"
           $zipPath = Join-Path $env:RUNNER_TEMP "template.zip"
           $extractDir = Join-Path $env:RUNNER_TEMP "template-src"
           Invoke-WebRequest -Uri $zipUrl -OutFile $zipPath
 
-          python -c "import zipfile,os,sys; z=zipfile.ZipFile(sys.argv[1]); z.extractall(sys.argv[2]); print(os.path.join(sys.argv[2],os.listdir(sys.argv[2])[0]))" $zipPath $extractDir | Set-Variable templateDir
+          python -c @"
+          import zipfile, os, sys
+          zf = zipfile.ZipFile(sys.argv[1])
+          dest = sys.argv[2]
+          # Use extended-length path prefix to bypass NTFS char restrictions
+          if os.name == 'nt':
+              dest = '\\\\?\\' + os.path.abspath(dest)
+          for info in zf.infolist():
+              target = os.path.join(dest, info.filename)
+              if info.is_dir():
+                  os.makedirs(target, exist_ok=True)
+              else:
+                  os.makedirs(os.path.dirname(target), exist_ok=True)
+                  with zf.open(info) as src, open(target, 'wb') as dst:
+                      dst.write(src.read())
+          # Print the top-level directory (without the \\?\ prefix)
+          raw_dest = sys.argv[2]
+          print(os.path.join(raw_dest, os.listdir(dest)[0]))
+          "@ $zipPath $extractDir | Set-Variable templateDir
 
           uvx --with gitpython cookiecutter $templateDir.Trim() --no-input --output-dir "$env:RUNNER_TEMP"
       - name: Verify generated project
