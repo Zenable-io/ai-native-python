@@ -212,16 +212,22 @@ jobs:
         shell: bash
         run: |
           cd "$RUNNER_TEMP/replace-me"
+          # Bootstrap the venv first so Task can evaluate top-level vars
+          # (VERSION uses `uv run python -c` which needs the project importable)
+          uv sync --frozen --all-extras
+          export PYTHONPATH="$PWD"
           task -v init
       - name: Run tests
         shell: bash
         run: |
           cd "$RUNNER_TEMP/replace-me"
+          export PYTHONPATH="$PWD"
           task -v test
       - name: Build Docker image
         shell: bash
         run: |
           cd "$RUNNER_TEMP/replace-me"
+          export PYTHONPATH="$PWD"
           task -v build
       - name: Verify Docker image
         shell: bash
