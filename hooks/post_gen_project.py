@@ -216,7 +216,7 @@ def _install_zenable_binary() -> bool:
         install_script = _download_url(install_url)
         _verify_checksum(install_script, expected_checksum)
 
-        subprocess.run(
+        result = subprocess.run(
             cmd,
             input=install_script,
             check=True,
@@ -224,6 +224,10 @@ def _install_zenable_binary() -> bool:
             timeout=120,
             env=env,
         )
+        if result.stdout:
+            LOG.info("Zenable installer stdout: %s", result.stdout.decode("utf-8", errors="replace").strip())
+        if result.stderr:
+            LOG.info("Zenable installer stderr: %s", result.stderr.decode("utf-8", errors="replace").strip())
         return True
     except ValueError:
         LOG.warning("Zenable install script checksum verification failed")
@@ -260,6 +264,14 @@ def opportunistically_install_zenable_tools() -> None:
 
         zenable_bin = _find_zenable_binary()
         if not zenable_bin:
+            # Diagnostic: log what the installer actually created
+            zenable_dir = Path.home() / ".zenable"
+            if zenable_dir.exists():
+                contents = [str(p.relative_to(zenable_dir)) for p in zenable_dir.rglob("*")]
+                LOG.warning("Install dir %s contents: %s", zenable_dir, contents)
+            else:
+                LOG.warning("Install directory does not exist: %s", zenable_dir)
+            LOG.warning("Current PATH: %s", os.environ.get("PATH", ""))
             LOG.warning("Zenable CLI was installed but could not be found in PATH or default location.")
             return
 

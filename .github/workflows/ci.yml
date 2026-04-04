@@ -208,6 +208,31 @@ jobs:
           }
 
           Write-Host "Windows smoke test passed: project generated and verified successfully"
+      - name: Initialize generated project
+        shell: bash
+        run: |
+          cd "$RUNNER_TEMP/replace-me"
+          task -v init
+      - name: Run tests
+        shell: bash
+        run: |
+          cd "$RUNNER_TEMP/replace-me"
+          task -v test
+      - name: Build Docker image
+        shell: bash
+        run: |
+          cd "$RUNNER_TEMP/replace-me"
+          task -v build
+      - name: Verify Docker image
+        shell: bash
+        run: |
+          docker run --rm --entrypoint python3 zenable-io/replace-me:latest \
+            -c "from replace_me import __version__; print(__version__)"
+      - name: Verify zenable CLI
+        shell: bash
+        run: |
+          export PATH="$HOME/.zenable/bin:$PATH"
+          zenable version
   finalizer:
     # This gives us something to set as required in the repo settings. Some projects use dynamic fan-outs using matrix strategies and the fromJSON function, so
     # you can't hard-code what _should_ run vs not. Having a finalizer simplifies that so you can just check that the finalizer succeeded, and if so, your
