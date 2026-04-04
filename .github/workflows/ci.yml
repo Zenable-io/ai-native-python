@@ -105,6 +105,8 @@ jobs:
   windows-smoke-test:
     name: Windows Smoke Test
     runs-on: windows-latest
+    env:
+      ZENABLE_LOGLEVEL: DEBUG
     steps:
       # Note: no checkout step. The cookiecutter template directory contains
       # characters (pipe, quotes) that are illegal on NTFS, so we cannot check

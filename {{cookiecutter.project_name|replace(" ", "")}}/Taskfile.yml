@@ -14,7 +14,7 @@ vars:
   PYTHON_VERSION: {{ cookiecutter.python_version }}
   SUPPORTED_PLATFORMS: 'linux/amd64,linux/arm64'
   VERSION:
-    sh: uv run python -c "import sys; sys.path.insert(0, 'src'); from {{ '{{.PROJECT_SLUG}}' }} import __version__; print(__version__)"
+    sh: "{{ '{{.RUN_SCRIPT}}' }} {{ '{{.SCRIPTS_DIR}}' }}/get_version.py {{ '{{.PROJECT_SLUG}}' }}"
   RUN_SCRIPT: 'uv run --frozen'
   SCRIPTS_DIR: 'scripts'
   LOCAL_PLATFORM:
