@@ -13,10 +13,10 @@ vars:
   PROJECT_SLUG: {{ cookiecutter.project_slug }}
   PYTHON_VERSION: {{ cookiecutter.python_version }}
   SUPPORTED_PLATFORMS: 'linux/amd64,linux/arm64'
-  VERSION:
-    sh: "{{ '{{.RUN_SCRIPT}}' }} {{ '{{.SCRIPTS_DIR}}' }}/get_version.py {{ '{{.PROJECT_SLUG}}' }}"
   RUN_SCRIPT: 'uv run --frozen'
   SCRIPTS_DIR: 'scripts'
+  VERSION:
+    sh: "{{ '{{.RUN_SCRIPT}}' }} {{ '{{.SCRIPTS_DIR}}' }}/get_version.py {{ '{{.PROJECT_SLUG}}' }}"
   LOCAL_PLATFORM:
     sh: "bash {{ '{{.SCRIPTS_DIR}}' }}/get_platform.sh"
   # Use PLATFORM if specified, otherwise use LOCAL_PLATFORM
