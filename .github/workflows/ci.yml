@@ -210,32 +210,32 @@ jobs:
           Write-Host "Windows smoke test passed: project generated and verified successfully"
       - name: Initialize generated project
         shell: bash
-        # VERSION and LOCAL_PLATFORM are top-level Taskfile vars evaluated via
-        # `uv run` shell commands.  On Windows the namespace-package import
-        # that resolves VERSION fails, so we supply both as env-var overrides.
-        env:
-          VERSION: '0.0.0'
-          LOCAL_PLATFORM: 'linux/amd64'
+        # Task's top-level VERSION var uses a namespace-package import that
+        # fails on Windows, so we run the init commands directly.
         run: |
           cd "$RUNNER_TEMP/replace-me"
           uv sync --frozen --all-extras
-          task -v init
       - name: Run tests
         shell: bash
-        env:
-          VERSION: '0.0.0'
-          LOCAL_PLATFORM: 'linux/amd64'
         run: |
           cd "$RUNNER_TEMP/replace-me"
-          task -v test
+          uv run --frozen pytest -m "unit" tests/
+          uv run --frozen pytest -m "integration" tests/
       - name: Build Docker image
         shell: bash
-        env:
-          VERSION: '0.0.0'
-          LOCAL_PLATFORM: 'linux/amd64'
         run: |
           cd "$RUNNER_TEMP/replace-me"
-          task -v build
+          docker buildx create --name multiplatform --driver docker-container --use 2>/dev/null || true
+          docker buildx build \
+            --platform linux/amd64 \
+            --pull \
+            --load \
+            --build-arg NAME="replace_me" \
+            --build-arg DESCRIPTION="A brief description of the project" \
+            --build-arg TIMESTAMP="$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            --build-arg COMMIT_HASH="$(git rev-parse HEAD)" \
+            -t zenable-io/replace-me:latest \
+            .
       - name: Verify Docker image
         shell: bash
         run: |
