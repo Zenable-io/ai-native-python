@@ -210,32 +210,19 @@ jobs:
           Write-Host "Windows smoke test passed: project generated and verified successfully"
       - name: Initialize generated project
         shell: bash
-        # Task's top-level VERSION var uses a namespace-package import that
-        # fails on Windows, so we run the init commands directly.
         run: |
           cd "$RUNNER_TEMP/replace-me"
-          uv sync --frozen --all-extras
+          task -v init
       - name: Run tests
         shell: bash
         run: |
           cd "$RUNNER_TEMP/replace-me"
-          uv run --frozen pytest -m "unit" tests/
-          uv run --frozen pytest -m "integration" tests/
+          task -v test
       - name: Build Docker image
         shell: bash
         run: |
           cd "$RUNNER_TEMP/replace-me"
-          docker buildx create --name multiplatform --driver docker-container --use 2>/dev/null || true
-          docker buildx build \
-            --platform linux/amd64 \
-            --pull \
-            --load \
-            --build-arg NAME="replace_me" \
-            --build-arg DESCRIPTION="A brief description of the project" \
-            --build-arg TIMESTAMP="$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
-            --build-arg COMMIT_HASH="$(git rev-parse HEAD)" \
-            -t zenable-io/replace-me:latest \
-            .
+          task -v build
       - name: Verify Docker image
         shell: bash
         run: |

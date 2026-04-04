@@ -14,11 +14,11 @@ vars:
   PYTHON_VERSION: {{ cookiecutter.python_version }}
   SUPPORTED_PLATFORMS: 'linux/amd64,linux/arm64'
   VERSION:
-    sh: uv run python -c 'from src.{{ '{{.PROJECT_SLUG}}' }} import __version__; print(__version__)'
+    sh: uv run python -c "import sys; sys.path.insert(0, 'src'); from {{ '{{.PROJECT_SLUG}}' }} import __version__; print(__version__)"
   RUN_SCRIPT: 'uv run --frozen'
   SCRIPTS_DIR: 'scripts'
   LOCAL_PLATFORM:
-    sh: "{{ '{{.RUN_SCRIPT}}' }} {{ '{{.SCRIPTS_DIR}}' }}/get_platform.sh"
+    sh: "bash {{ '{{.SCRIPTS_DIR}}' }}/get_platform.sh"
   # Use PLATFORM if specified, otherwise use LOCAL_PLATFORM
   PLATFORM: '{{ '{{if .PLATFORM}}' }}{{ '{{.PLATFORM}}' }}{{ '{{else}}' }}{{ '{{.LOCAL_PLATFORM}}' }}{{ '{{end}}' }}'
   # Output redirect based on CI environment
