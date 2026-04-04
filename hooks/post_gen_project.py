@@ -4,6 +4,7 @@ Post-project generation hook
 """
 
 import datetime
+import hashlib
 import json
 import os
 import pprint
@@ -13,6 +14,7 @@ import sys
 from collections import OrderedDict
 from logging import basicConfig, getLogger
 from pathlib import Path
+from urllib.request import urlopen
 
 import yaml
 
@@ -155,48 +157,53 @@ def _find_zenable_binary() -> str | None:
     return None
 
 
-def _download_install_script() -> bytes:
-    """Download the Zenable install script, trying curl then wget."""
-    url = "https://cli.zenable.app/install.sh"
+ZENABLE_RELEASE_URL = "https://cli.zenable.app/zenable/latest"
 
-    if shutil.which("curl"):
-        result = subprocess.run(
-            ["curl", "-fsSL", url],
-            check=True,
-            capture_output=True,
-            timeout=60,
-        )
-        return result.stdout
 
-    if shutil.which("wget"):
-        result = subprocess.run(
-            ["wget", "-qO-", url],
-            check=True,
-            capture_output=True,
-            timeout=60,
-        )
-        return result.stdout
+def _fetch_release_metadata() -> dict:
+    """Fetch the Zenable CLI release metadata from cli.zenable.app."""
+    with urlopen(ZENABLE_RELEASE_URL, timeout=30) as resp:  # noqa: S310
+        return json.loads(resp.read())
 
-    msg = "Neither curl nor wget is available"
-    raise FileNotFoundError(msg)
+
+def _download_url(url: str) -> bytes:
+    """Download a URL and return the raw bytes."""
+    with urlopen(url, timeout=60) as resp:  # noqa: S310
+        return resp.read()
+
+
+def _verify_checksum(data: bytes, expected_sha256: str) -> None:
+    """Verify SHA-256 checksum of data against the expected value.
+
+    Raises ValueError if the checksum does not match.
+    """
+    actual = hashlib.sha256(data).hexdigest()
+    if actual != expected_sha256:
+        msg = f"Checksum mismatch: expected {expected_sha256}, got {actual}"
+        raise ValueError(msg)
 
 
 def _install_zenable_binary() -> bool:
     """Install the zenable CLI binary for macOS/Linux.
 
-    Runs non-interactively via ZENABLE_YES=1 so no prompts appear during
-    cookiecutter project generation.
-
-    The install script (cli.zenable.app/install.sh) verifies the downloaded
-    binary via cosign signature verification and checksum validation before
-    placing it on disk.
+    Fetches the release metadata from cli.zenable.app/zenable/latest,
+    downloads install.sh, verifies its SHA-256 checksum, then executes
+    it non-interactively. The install script itself also performs cosign
+    signature verification of the downloaded binary.
 
     Returns True if installation succeeded, False otherwise.
     """
     env = {**os.environ, "ZENABLE_YES": "1"}
 
     try:
-        install_script = _download_install_script()
+        metadata = _fetch_release_metadata()
+
+        install_url = metadata["installers"]["install.sh"]
+        expected_checksum = metadata["installer_checksums"]["install.sh"]
+
+        install_script = _download_url(install_url)
+        _verify_checksum(install_script, expected_checksum)
+
         subprocess.run(
             ["bash"],
             input=install_script,
@@ -206,6 +213,9 @@ def _install_zenable_binary() -> bool:
             env=env,
         )
         return True
+    except ValueError:
+        LOG.warning("Zenable install script checksum verification failed")
+        return False
     except Exception:
         LOG.warning("Failed to install the Zenable CLI binary")
         return False
