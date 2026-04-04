@@ -14,8 +14,7 @@ import sys
 from collections import OrderedDict
 from logging import basicConfig, getLogger
 from pathlib import Path
-from urllib.parse import urlparse
-from urllib.request import urlopen
+from urllib.request import HTTPSHandler, build_opener
 
 import yaml
 
@@ -162,24 +161,18 @@ def _find_zenable_binary() -> str | None:
 ZENABLE_RELEASE_URL = "https://cli.zenable.app/zenable/latest"
 
 
-def _https_urlopen(url: str, *, timeout: int) -> object:
-    """Open a URL after validating it uses HTTPS to mitigate SSRF risks."""
-    parsed = urlparse(url)
-    if parsed.scheme != "https":
-        msg = f"Only HTTPS URLs are allowed, got scheme: {parsed.scheme!r}"
-        raise ValueError(msg)
-    return urlopen(url, timeout=timeout)  # noqa: S310
+_https_opener = build_opener(HTTPSHandler())
 
 
 def _fetch_release_metadata() -> dict:
     """Fetch the Zenable CLI release metadata from cli.zenable.app."""
-    with _https_urlopen(ZENABLE_RELEASE_URL, timeout=30) as resp:
+    with _https_opener.open(ZENABLE_RELEASE_URL, timeout=30) as resp:
         return json.loads(resp.read())
 
 
 def _download_url(url: str) -> bytes:
     """Download a URL and return the raw bytes."""
-    with _https_urlopen(url, timeout=60) as resp:
+    with _https_opener.open(url, timeout=60) as resp:
         return resp.read()
 
 
