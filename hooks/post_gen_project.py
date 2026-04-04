@@ -258,6 +258,13 @@ def opportunistically_install_zenable_tools() -> None:
             LOG.warning("Zenable CLI could not be installed.")
             return
 
+        # The installer updates PATH for future shells/steps (e.g. via
+        # GITHUB_PATH or the user's shell profile) but not the current
+        # process.  Add the default install directory so we can find the
+        # binary immediately.
+        zenable_bin_dir = str(Path.home() / ".zenable" / "bin")
+        os.environ["PATH"] = zenable_bin_dir + os.pathsep + os.environ.get("PATH", "")
+
         zenable_bin = _find_zenable_binary()
         if not zenable_bin:
             LOG.warning("Zenable CLI was installed but could not be found in PATH or default location.")
