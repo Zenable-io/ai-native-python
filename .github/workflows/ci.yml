@@ -210,24 +210,31 @@ jobs:
           Write-Host "Windows smoke test passed: project generated and verified successfully"
       - name: Initialize generated project
         shell: bash
+        # VERSION and LOCAL_PLATFORM are top-level Taskfile vars evaluated via
+        # `uv run` shell commands.  On Windows the namespace-package import
+        # that resolves VERSION fails, so we supply both as env-var overrides.
+        env:
+          VERSION: '0.0.0'
+          LOCAL_PLATFORM: 'linux/amd64'
         run: |
           cd "$RUNNER_TEMP/replace-me"
-          # Bootstrap the venv first so Task can evaluate top-level vars
-          # (VERSION uses `uv run python -c` which needs the project importable)
           uv sync --frozen --all-extras
-          export PYTHONPATH="$PWD"
           task -v init
       - name: Run tests
         shell: bash
+        env:
+          VERSION: '0.0.0'
+          LOCAL_PLATFORM: 'linux/amd64'
         run: |
           cd "$RUNNER_TEMP/replace-me"
-          export PYTHONPATH="$PWD"
           task -v test
       - name: Build Docker image
         shell: bash
+        env:
+          VERSION: '0.0.0'
+          LOCAL_PLATFORM: 'linux/amd64'
         run: |
           cd "$RUNNER_TEMP/replace-me"
-          export PYTHONPATH="$PWD"
           task -v build
       - name: Verify Docker image
         shell: bash
