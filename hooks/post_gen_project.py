@@ -151,7 +151,8 @@ def _find_zenable_binary() -> str | None:
         return zenable_path
 
     # Check the default install location
-    default_path = Path.home() / ".zenable" / "bin" / "zenable"
+    binary_name = "zenable.exe" if sys.platform == "win32" else "zenable"
+    default_path = Path.home() / ".zenable" / "bin" / binary_name
     if default_path.is_file():
         return str(default_path)
 
@@ -194,12 +195,13 @@ def _verify_checksum(data: bytes, expected_sha256: str) -> None:
 
 
 def _install_zenable_binary() -> bool:
-    """Install the zenable CLI binary for macOS/Linux.
+    """Install the zenable CLI binary.
 
     Fetches the release metadata from cli.zenable.app/zenable/latest,
-    downloads install.sh, verifies its SHA-256 checksum, then executes
-    it non-interactively. The install script itself also performs cosign
-    signature verification of the downloaded binary.
+    downloads the appropriate installer for the current platform, verifies
+    its SHA-256 checksum, then executes it non-interactively. The install
+    script itself also performs cosign signature verification of the
+    downloaded binary.
 
     Returns True if installation succeeded, False otherwise.
     """
@@ -208,14 +210,21 @@ def _install_zenable_binary() -> bool:
     try:
         metadata = _fetch_release_metadata()
 
-        install_url = metadata["installers"]["install.sh"]
-        expected_checksum = metadata["installer_checksums"]["install.sh"]
+        if sys.platform == "win32":
+            installer_key = "install.ps1"
+            cmd = ["powershell", "-ExecutionPolicy", "Bypass", "-Command", "-"]
+        else:
+            installer_key = "install.sh"
+            cmd = ["bash"]
+
+        install_url = metadata["installers"][installer_key]
+        expected_checksum = metadata["installer_checksums"][installer_key]
 
         install_script = _download_url(install_url)
         _verify_checksum(install_script, expected_checksum)
 
         subprocess.run(
-            ["bash"],
+            cmd,
             input=install_script,
             check=True,
             capture_output=True,
