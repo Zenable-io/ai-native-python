@@ -16,7 +16,7 @@ vars:
   RUN_SCRIPT: 'uv run --frozen'
   SCRIPTS_DIR: 'scripts'
   VERSION:
-    sh: "{{ '{{.RUN_SCRIPT}}' }} python -c \"import sys; sys.path.insert(0, 'src'); from {{ '{{.PROJECT_SLUG}}' }} import __version__; print(__version__)\""
+    sh: "{{ '{{.RUN_SCRIPT}}' }} python -c \"import sys,os;d=os.path.join(os.getcwd(),'src');print(f'DEBUG cwd={os.getcwd()} src_exists={os.path.isdir(d)}',file=sys.stderr);sys.path.insert(0,d);from {{ '{{.PROJECT_SLUG}}' }} import __version__;print(__version__)\""
   LOCAL_PLATFORM:
     sh: "bash {{ '{{.SCRIPTS_DIR}}' }}/get_platform.sh"
   # Use PLATFORM if specified, otherwise use LOCAL_PLATFORM
