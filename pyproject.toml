@@ -1,5 +1,6 @@
 [project]
 name = "ai-native-python"
+# Automatically updated by the release task via python-semantic-release (see Taskfile.yml and [tool.semantic_release] below)
 version = "0.4.1"
 description = "The AI-Native python paved road generator"
 authors = [
@@ -75,8 +76,6 @@ dev = [
     "pyyaml",
     "refurb",
 ]
-
-[tool.coverage.report]
 
 [tool.pyright]
 include = ["ai_native_python", "tests", "hooks"]
