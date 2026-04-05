@@ -229,6 +229,35 @@ jobs:
         run: |
           cd "$RUNNER_TEMP/replace-me"
           task -v unit-test
+      - name: Setup WSL with Docker
+        shell: bash
+        run: |
+          wsl --install -d Ubuntu-24.04 --no-launch
+          wsl -d Ubuntu-24.04 -u root -- bash -ec "
+            apt-get update -qq
+            apt-get install -y -qq curl ca-certificates >/dev/null
+            curl -fsSL https://get.docker.com | sh -s -- --quiet
+            service docker start
+            docker buildx create --use
+          "
+      - name: Build Docker image
+        shell: bash
+        run: |
+          wsl_project="$(wsl -d Ubuntu-24.04 -- wslpath "$RUNNER_TEMP")/replace-me"
+          wsl -d Ubuntu-24.04 -u root --cd "$wsl_project" -- docker buildx build \
+            --platform linux/amd64 \
+            --pull --load \
+            --build-arg NAME=replace_me \
+            --build-arg "DESCRIPTION=A brief description of the project" \
+            --build-arg "TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            --build-arg COMMIT_HASH=smoke-test \
+            -t zenable-io/replace-me:latest .
+      - name: Verify Docker image
+        shell: bash
+        run: |
+          wsl -d Ubuntu-24.04 -u root -- docker run --rm --entrypoint python3 \
+            zenable-io/replace-me:latest \
+            -c "from replace_me import __version__; print(__version__)"
       - name: Verify zenable CLI
         shell: bash
         run: |
