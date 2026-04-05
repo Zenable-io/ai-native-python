@@ -80,7 +80,7 @@ jobs:
       - name: Run SBOM generation
         run: task -v sbom
       - name: Upload SBOM artifacts
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: sbom-files
           path: |
@@ -89,7 +89,7 @@ jobs:
       - name: Check license compliance
         run: task -v license-check
       - name: Upload license check results
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: license-check-results
           path: license-check.json
@@ -97,7 +97,7 @@ jobs:
       - name: Run vulnerability scan
         run: task -v vulnscan
       - name: Upload vulnerability scan results
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: vuln-scan-results
           path: vulns.json
@@ -111,11 +111,14 @@ jobs:
       # out the repo on Windows. Instead, cookiecutter fetches the template
       # directly from the remote branch.
       - name: Setup uv
-        uses: astral-sh/setup-uv@v4
+        uses: astral-sh/setup-uv@v7
         with:
           python-version: ${{ env.python_version }}
+          # No checkout in this job (NTFS-illegal chars in template dir), so disable cache
+          enable-cache: false
+          ignore-empty-workdir: true
       - name: Install Task
-        uses: go-task/setup-task@v1
+        uses: go-task/setup-task@v2
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Generate project from template
@@ -138,11 +141,13 @@ jobs:
           curl -fsSL "$scriptUrl" -o "$tmpdir/extract_template_zip.py"
           repoDir=$(python3 "$tmpdir/extract_template_zip.py" "$tmpdir/template.zip" "$tmpdir/src")
 
-          uvx --with gitpython cookiecutter "$repoDir" --no-input --output-dir "$RUNNER_TEMP"
+          uvx --with gitpython cookiecutter "$repoDir" --no-input \
+            project_name="ci-test-project" \
+            --output-dir "$RUNNER_TEMP"
       - name: Verify generated project
         shell: pwsh
         run: |
-          $project = Join-Path $env:RUNNER_TEMP "replace-me"
+          $project = Join-Path $env:RUNNER_TEMP "ci-test-project"
 
           # Verify the project directory was created
           if (-not (Test-Path $project)) {
@@ -219,25 +224,25 @@ jobs:
       - name: Initialize generated project
         shell: bash
         run: |
-          cd "$RUNNER_TEMP/replace-me"
+          cd "$RUNNER_TEMP/ci-test-project"
           task -v init
       - name: Run unit tests
         shell: bash
         # Integration tests require Docker (Linux images) which is not
         # available on Windows runners; those are covered by the Linux CI job.
         run: |
-          cd "$RUNNER_TEMP/replace-me"
+          cd "$RUNNER_TEMP/ci-test-project"
           task -v unit-test
       - name: Build Docker image
         shell: bash
         run: |
-          cd "$RUNNER_TEMP/replace-me"
+          cd "$RUNNER_TEMP/ci-test-project"
           task -v build
       - name: Verify Docker image
         shell: bash
         run: |
-          docker run --rm zenable-io/replace-me:latest --version
-          docker run --rm zenable-io/replace-me:latest --help
+          docker run --rm zenable-io/ci-test-project:latest --version
+          docker run --rm zenable-io/ci-test-project:latest --help
       - name: Verify zenable CLI
         shell: bash
         run: |

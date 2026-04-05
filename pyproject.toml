@@ -1,5 +1,6 @@
 [project]
 name = "ai-native-python"
+# Automatically updated by the release task via python-semantic-release (see Taskfile.yml and [tool.semantic_release] below)
 version = "0.4.1"
 description = "The AI-Native python paved road generator"
 authors = [
@@ -50,8 +51,12 @@ ignore = [
 plugins = []
 
 [tool.pytest.ini_options]
-addopts = "--cov=ai_native_python --cov-append --no-cov-on-fail --cov-fail-under=0 --cov-report=html --cov-report=xml --cov-report=term-missing"
+addopts = "--cov=ai_native_python --cov=hooks --cov-append --no-cov-on-fail --cov-fail-under=0 --cov-report=html --cov-report=xml --cov-report=term-missing"
 pythonpath = ['.']
+filterwarnings = [
+    # Tests invoke hooks via cookiecutter subprocess, so coverage can't track them directly
+    "ignore:No data was collected:coverage.exceptions.CoverageWarning",
+]
 markers = [
     "unit: marks tests as unit tests (deselect with '-m \"not unit\"')",
     "integration: marks tests as integration tests (deselect with '-m \"not integration\"')",
