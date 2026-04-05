@@ -65,5 +65,7 @@ def test_main_as_script_version():
         text=True,
     )
 
+    from {{ cookiecutter.project_slug }} import __version__
+
     assert result.returncode == 0
-    assert "0.0.0" in result.stdout
+    assert __version__ in result.stdout
