@@ -129,37 +129,14 @@ jobs:
           git config --global user.email "ci@zenable.io"
 
           # The template directory name contains NTFS-illegal characters
-          # (double quotes, pipe). Use Python to extract the zip, renaming
-          # the template dir to {{cookiecutter.project_name}} which is
-          # NTFS-safe and renders identically for defaults (no spaces).
+          # (double quotes, pipe). Use extract_template_zip.py to safely
+          # extract and rename only the top-level template dir.
           zipUrl="https://github.com/${{ github.repository }}/archive/${TEMPLATE_REF}.zip"
+          scriptUrl="https://raw.githubusercontent.com/${{ github.repository }}/${TEMPLATE_REF}/scripts/extract_template_zip.py"
           tmpdir=$(mktemp -d)
           curl -fsSL "$zipUrl" -o "$tmpdir/template.zip"
-
-          repoDir=$(python3 -c "
-          import zipfile, os, sys
-          zf, dest = zipfile.ZipFile(sys.argv[1]), sys.argv[2]
-          for info in zf.infolist():
-              parts = info.filename.split('/')
-              # Only rename the top-level template dir (index 1) which has
-              # NTFS-illegal chars (pipe, quotes).  Nested cookiecutter dirs
-              # like {{cookiecutter.project_slug}} are NTFS-safe and must be
-              # preserved so cookiecutter renders them correctly.
-              safe = []
-              for i, p in enumerate(parts):
-                  if i == 1 and '{{cookiecutter.' in p:
-                      safe.append('{{cookiecutter.project_name}}')
-                  else:
-                      safe.append(p)
-              target = os.path.join(dest, *[s for s in safe if s])
-              if info.is_dir():
-                  os.makedirs(target, exist_ok=True)
-              else:
-                  os.makedirs(os.path.dirname(target), exist_ok=True)
-                  with zf.open(info) as s, open(target, 'wb') as d:
-                      d.write(s.read())
-          print(os.path.join(dest, os.listdir(dest)[0]))
-          " "$tmpdir/template.zip" "$tmpdir/src")
+          curl -fsSL "$scriptUrl" -o "$tmpdir/extract_template_zip.py"
+          repoDir=$(python3 "$tmpdir/extract_template_zip.py" "$tmpdir/template.zip" "$tmpdir/src")
 
           uvx --with gitpython cookiecutter "$repoDir" --no-input --output-dir "$RUNNER_TEMP"
       - name: Verify generated project
@@ -259,8 +236,10 @@ jobs:
       - name: Verify Docker image
         shell: bash
         run: |
-          docker run --rm --entrypoint python3 \
-            zenable-io/replace-me:latest \
+          # Verify the Python runtime is functional
+          docker run --rm --entrypoint python3 zenable-io/replace-me:latest --version
+          # Verify the project module is importable and reports its version
+          docker run --rm --entrypoint python3 zenable-io/replace-me:latest \
             -c "from replace_me import __version__; print(__version__)"
       - name: Verify zenable CLI
         shell: bash
