@@ -129,15 +129,10 @@ jobs:
           git config --global user.name "CI Automation"
           git config --global user.email "ci@zenable.io"
 
-          # Pre-populate cookiecutter's cache so the gh: command doesn't need to
-          # clone main (which may still have NTFS-illegal paths before this PR merges).
-          # After merge, this is a no-op since the cache will already be valid.
-          repo_name=$(basename "${TEMPLATE_REPO}")
-          cache_dir="$HOME/.cookiecutters/${repo_name}"
-          if [[ ! -d "$cache_dir" ]]; then
-            git clone --no-checkout "https://github.com/${TEMPLATE_REPO}.git" "$cache_dir"
-            git -C "$cache_dir" checkout "${TEMPLATE_REF}"
-          fi
+          # Allow git to clone repos with NTFS-illegal paths (e.g. pipes/quotes in
+          # the old template directory name on main). After this PR merges, the
+          # illegal paths are gone and this setting becomes a no-op.
+          git config --global core.protectNTFS false
 
           # Same command as README, plus --checkout for the PR branch and --no-input for CI
           uvx --with gitpython cookiecutter \
