@@ -14,9 +14,7 @@ def main():
         prog="{{ cookiecutter.project_slug }}",
         description="{{ cookiecutter.project_short_description | replace('"', '\\"') | replace("'", "\\\\'") }}",
     )
-    parser.add_argument(
-        "--version", action="version", version=__version__
-    )
+    parser.add_argument("--version", action="version", version=__version__)
     parser.parse_args()
 
     log = config.setup_logging()
