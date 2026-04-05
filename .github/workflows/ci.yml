@@ -141,11 +141,13 @@ jobs:
           curl -fsSL "$scriptUrl" -o "$tmpdir/extract_template_zip.py"
           repoDir=$(python3 "$tmpdir/extract_template_zip.py" "$tmpdir/template.zip" "$tmpdir/src")
 
-          uvx --with gitpython cookiecutter "$repoDir" --no-input --output-dir "$RUNNER_TEMP"
+          uvx --with gitpython cookiecutter "$repoDir" --no-input \
+            project_name="ci-test-project" \
+            --output-dir "$RUNNER_TEMP"
       - name: Verify generated project
         shell: pwsh
         run: |
-          $project = Join-Path $env:RUNNER_TEMP "replace-me"
+          $project = Join-Path $env:RUNNER_TEMP "ci-test-project"
 
           # Verify the project directory was created
           if (-not (Test-Path $project)) {
@@ -222,25 +224,25 @@ jobs:
       - name: Initialize generated project
         shell: bash
         run: |
-          cd "$RUNNER_TEMP/replace-me"
+          cd "$RUNNER_TEMP/ci-test-project"
           task -v init
       - name: Run unit tests
         shell: bash
         # Integration tests require Docker (Linux images) which is not
         # available on Windows runners; those are covered by the Linux CI job.
         run: |
-          cd "$RUNNER_TEMP/replace-me"
+          cd "$RUNNER_TEMP/ci-test-project"
           task -v unit-test
       - name: Build Docker image
         shell: bash
         run: |
-          cd "$RUNNER_TEMP/replace-me"
+          cd "$RUNNER_TEMP/ci-test-project"
           task -v build
       - name: Verify Docker image
         shell: bash
         run: |
-          docker run --rm zenable-io/replace-me:latest --version
-          docker run --rm zenable-io/replace-me:latest --help
+          docker run --rm zenable-io/ci-test-project:latest --version
+          docker run --rm zenable-io/ci-test-project:latest --help
       - name: Verify zenable CLI
         shell: bash
         run: |

@@ -15,7 +15,7 @@ def main():
         description="{{ cookiecutter.project_short_description | replace('"', '\\"') | replace("'", "\\\\'") }}",
     )
     parser.add_argument(
-        "--version", action="version", version=f"%(prog)s {__version__}"
+        "--version", action="version", version=__version__
     )
     parser.parse_args()
 
