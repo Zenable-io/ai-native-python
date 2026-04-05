@@ -226,15 +226,20 @@ jobs:
         run: |
           cd "$RUNNER_TEMP/replace-me"
           task -v init
-      - name: Run tests
+      - name: Run unit tests
         shell: bash
+        # Integration tests require Docker (Linux images) which is not
+        # available on Windows runners; those are covered by the Linux CI job.
         run: |
           cd "$RUNNER_TEMP/replace-me"
-          task -v test
+          task -v unit-test
       - name: Verify zenable CLI
         shell: bash
         run: |
           export PATH="$HOME/.zenable/bin:$PATH"
+          echo "Checking $HOME/.zenable/:"
+          ls -laR "$HOME/.zenable/" 2>/dev/null || echo "$HOME/.zenable/ does not exist"
+          echo "---"
           zenable version
   finalizer:
     # This gives us something to set as required in the repo settings. Some projects use dynamic fan-outs using matrix strategies and the fromJSON function, so
