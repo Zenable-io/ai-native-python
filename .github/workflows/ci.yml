@@ -145,7 +145,16 @@ jobs:
           zf, dest = zipfile.ZipFile(sys.argv[1]), sys.argv[2]
           for info in zf.infolist():
               parts = info.filename.split('/')
-              safe = [('{{cookiecutter.project_name}}' if '{{cookiecutter.' in p else p) for p in parts]
+              # Only rename the top-level template dir (index 1) which has
+              # NTFS-illegal chars (pipe, quotes).  Nested cookiecutter dirs
+              # like {{cookiecutter.project_slug}} are NTFS-safe and must be
+              # preserved so cookiecutter renders them correctly.
+              safe = []
+              for i, p in enumerate(parts):
+                  if i == 1 and '{{cookiecutter.' in p:
+                      safe.append('{{cookiecutter.project_name}}')
+                  else:
+                      safe.append(p)
               target = os.path.join(dest, *[s for s in safe if s])
               if info.is_dir():
                   os.makedirs(target, exist_ok=True)
