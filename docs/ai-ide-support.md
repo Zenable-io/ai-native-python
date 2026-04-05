@@ -7,11 +7,23 @@ The AI-Native Python template automatically configures AI-powered development to
 
 ## Automatic Configuration
 
-When you generate a new project, the post-generation hook automatically detects which IDEs and AI assistants you have installed and creates appropriate configuration files:
+When you generate a new project, the post-generation hook automatically installs the [Zenable CLI](https://cli.zenable.app) and configures your IDE integrations:
 
-- Model Context Protocol (MCP) configuration for [Zenable](https://zenable.io) and other MCP servers (if supported tools are detected)
-- IDE-specific configuration files based on what's installed (Claude, GitHub Copilot, Cursor, etc.)
-- Project-specific context and guidelines tailored to your project
+**Installation (if the Zenable CLI is not already installed):**
+
+macOS/Linux:
+```bash
+curl -fsSL https://cli.zenable.app/install.sh | bash
+```
+
+Windows:
+```powershell
+powershell -ExecutionPolicy Bypass -Command "irm https://cli.zenable.app/install.ps1 | iex"
+```
+
+**IDE Configuration:**
+
+Once installed, `zenable install` detects which IDEs and AI assistants you have installed and creates appropriate configuration files for 15+ supported IDEs including Claude Code, Cursor, Windsurf, VS Code, GitHub Copilot, and more.
 
 These configurations are dynamically generated based on your installed IDEs and project settings, and include:
 

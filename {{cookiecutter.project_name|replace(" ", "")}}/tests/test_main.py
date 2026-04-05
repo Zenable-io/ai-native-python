@@ -22,14 +22,20 @@ def test_main_function():
     """Test that main() raises NotImplementedError"""
     from main import main
 
-    # Mock the argument parsing to avoid conflicts with pytest args
-    with patch("{{ cookiecutter.project_slug }}.config.get_args_config") as mock_args:
-        import logging
-
-        mock_args.return_value = {"loglevel": logging.WARNING}
-
+    with patch("sys.argv", ["main"]):
         with pytest.raises(NotImplementedError):
             main()
+
+
+@pytest.mark.unit
+def test_main_version():
+    """Test that --version prints the version and exits"""
+    from main import main
+
+    with patch("sys.argv", ["main", "--version"]):
+        with pytest.raises(SystemExit) as exc_info:
+            main()
+        assert exc_info.value.code == 0
 
 
 @pytest.mark.unit
@@ -46,3 +52,20 @@ def test_main_as_script():
     # Should exit with code 1 due to NotImplementedError
     assert result.returncode == 1
     assert "NotImplementedError" in result.stderr
+
+
+@pytest.mark.unit
+def test_main_as_script_version():
+    """Test that --version works when run as a script"""
+    main_path = Path(__file__).parent.parent / "src" / "main.py"
+
+    result = subprocess.run(
+        [sys.executable, str(main_path), "--version"],
+        capture_output=True,
+        text=True,
+    )
+
+    from {{ cookiecutter.project_slug }} import __version__
+
+    assert result.returncode == 0
+    assert __version__ in result.stdout
