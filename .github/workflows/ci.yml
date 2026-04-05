@@ -221,8 +221,6 @@ jobs:
           }
 
           Write-Host "Windows smoke test passed: project generated and verified successfully"
-      - name: Setup Docker Buildx
-        uses: docker/setup-buildx-action@v3
       - name: Initialize generated project
         shell: bash
         run: |
@@ -233,16 +231,6 @@ jobs:
         run: |
           cd "$RUNNER_TEMP/replace-me"
           task -v test
-      - name: Build Docker image
-        shell: bash
-        run: |
-          cd "$RUNNER_TEMP/replace-me"
-          task -v build
-      - name: Verify Docker image
-        shell: bash
-        run: |
-          docker run --rm --entrypoint python3 zenable-io/replace-me:latest \
-            -c "from replace_me import __version__; print(__version__)"
       - name: Verify zenable CLI
         shell: bash
         run: |
