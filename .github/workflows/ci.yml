@@ -114,6 +114,9 @@ jobs:
         uses: astral-sh/setup-uv@v7
         with:
           python-version: ${{ env.python_version }}
+          # No checkout in this job (NTFS-illegal chars in template dir), so disable cache
+          enable-cache: false
+          ignore-empty-workdir: true
       - name: Install Task
         uses: go-task/setup-task@v2
         with:
