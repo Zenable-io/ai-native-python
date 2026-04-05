@@ -24,7 +24,6 @@ defaults:
 jobs:
   lint:
     name: Lint
-    if: false  # Temporarily disabled while iterating on Windows support
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout the repository
@@ -40,7 +39,6 @@ jobs:
         run: task -v lint
   test:
     name: Test
-    if: false  # Temporarily disabled while iterating on Windows support
     runs-on: ubuntu-24.04
     permissions:
       contents: write
@@ -107,8 +105,6 @@ jobs:
   windows-smoke-test:
     name: Windows Smoke Test
     runs-on: windows-latest
-    env:
-      ZENABLE_LOGLEVEL: DEBUG
     steps:
       # Note: no checkout step. The cookiecutter template directory contains
       # characters (pipe, quotes) that are illegal on NTFS, so we cannot check
@@ -237,9 +233,6 @@ jobs:
         shell: bash
         run: |
           export PATH="$HOME/.zenable/bin:$PATH"
-          echo "Checking $HOME/.zenable/:"
-          ls -laR "$HOME/.zenable/" 2>/dev/null || echo "$HOME/.zenable/ does not exist"
-          echo "---"
           zenable version
   finalizer:
     # This gives us something to set as required in the repo settings. Some projects use dynamic fan-outs using matrix strategies and the fromJSON function, so
@@ -249,7 +242,7 @@ jobs:
     name: Finalize the pipeline
     runs-on: ubuntu-24.04
     # Keep this aligned with the above jobs
-    needs: [lint, test, windows-smoke-test]  # lint and test temporarily disabled
+    needs: [lint, test, windows-smoke-test]
     if: always()  # Ensure it runs even if "needs" fails or is cancelled
     steps:
       - name: Check for failed or cancelled jobs
