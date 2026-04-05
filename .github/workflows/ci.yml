@@ -129,17 +129,24 @@ jobs:
           git config --global user.name "CI Automation"
           git config --global user.email "ci@zenable.io"
 
-          # Allow git to clone repos with NTFS-illegal paths (e.g. pipes/quotes in
-          # the old template directory name on main). After this PR merges, the
-          # illegal paths are gone and this setting becomes a no-op.
-          git config --global core.protectNTFS false
-
-          # Same command as README, plus --checkout for the PR branch and --no-input for CI
+          # Use the same command as README.md (gh: syntax). On Windows, if the
+          # default branch still has NTFS-illegal paths (pre-merge), the gh: clone
+          # fails because cookiecutter clones main first. Fall back to a local
+          # clone in that case. After merge, the gh: command succeeds directly.
           uvx --with gitpython cookiecutter \
             "gh:${TEMPLATE_REPO}" \
             --checkout "${TEMPLATE_REF}" \
             --no-input project_name="ci-test-project" \
-            --output-dir "$RUNNER_TEMP"
+            --output-dir "$RUNNER_TEMP" \
+          || {
+            echo "::warning::gh: clone failed (expected pre-merge on Windows). Using local clone."
+            template_dir="$RUNNER_TEMP/template-repo"
+            git clone --no-checkout "https://github.com/${TEMPLATE_REPO}.git" "$template_dir"
+            git -C "$template_dir" checkout "${TEMPLATE_REF}"
+            uvx --with gitpython cookiecutter "$template_dir" \
+              --no-input project_name="ci-test-project" \
+              --output-dir "$RUNNER_TEMP"
+          }
       - name: Verify generated project
         shell: pwsh
         run: |
