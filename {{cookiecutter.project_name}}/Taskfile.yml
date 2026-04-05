@@ -173,8 +173,8 @@ tasks:
   update:
     desc: Update the project dev and runtime dependencies
     cmds:
-      # This currently assumes uv was installed via uv (locally); we will want to make it more flexible in the future
-      - '{{ '{{if ne .GITHUB_ACTIONS "true"}}' }}brew upgrade uv{{ '{{end}}' }}'
+      # Upgrade uv via brew on macOS/Linux when running locally (not CI)
+      - '{{ '{{if and (ne .GITHUB_ACTIONS "true") (ne OS "windows")}}' }}brew upgrade uv{{ '{{end}}' }}'
       - uv tool upgrade --all
       - pre-commit autoupdate --freeze --jobs 4
       - uv lock --upgrade

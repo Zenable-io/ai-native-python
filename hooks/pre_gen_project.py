@@ -16,11 +16,16 @@ PROJECT_SLUG = "{{ cookiecutter.project_slug }}"
 
 
 def validate_project_name() -> None:
-    """Validate that project_name starts with an alphabetical character."""
-    # Check if project_name starts with an alphabetical character
+    """Validate that project_name starts with an alphabetical character and contains no spaces."""
     if not re.match(r"^[a-zA-Z]", PROJECT_NAME):
         LOG.error(
-            "Invalid project name '%s': Python project names must start with an alphabetical character (a-z or A-Z).",
+            "Invalid project name '%s': must start with an alphabetical character (a-z or A-Z).",
+            PROJECT_NAME,
+        )
+        sys.exit(1)
+    if " " in PROJECT_NAME:
+        LOG.error(
+            "Invalid project name '%s': must not contain spaces. Use hyphens instead (e.g. 'my-project').",
             PROJECT_NAME,
         )
         sys.exit(1)

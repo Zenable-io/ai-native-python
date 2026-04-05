@@ -46,7 +46,7 @@ task init  # Installs pre-commit and sets up hooks, alongside setting up other p
 6. **GitHub Actions** - Actionlint validation
 7. **OpenAPI** - Schema validation
 
-For the full list of hooks, see `{{cookiecutter.project_name|replace(" ", "")}}/.pre-commit-config.yaml`
+For the full list of hooks, see `{{cookiecutter.project_name}}/.pre-commit-config.yaml`
 
 ### Configuration
 

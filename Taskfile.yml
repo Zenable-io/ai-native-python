@@ -93,12 +93,12 @@ tasks:
   update:
     desc: Update the project dev and runtime dependencies
     cmds:
-      # This currently assumes uv was installed via uv (locally); we will want to make it more flexible in the future
-      - '{{if ne .GITHUB_ACTIONS "true"}}brew upgrade uv{{end}}'
+      # Upgrade uv via brew on macOS/Linux when running locally (not CI)
+      - '{{if and (ne .GITHUB_ACTIONS "true") (ne OS "windows")}}brew upgrade uv{{end}}'
       - uv tool upgrade --all
       - pre-commit autoupdate --freeze --jobs 4
       # Copy the newly updated config into the project template, excluding the exclude line
-      - cat .pre-commit-config.yaml | grep -v ^exclude > '{{`{{cookiecutter.project_name|replace(" ", "")}}`}}/.pre-commit-config.yaml'
+      - cat .pre-commit-config.yaml | grep -v ^exclude > '{{`{{cookiecutter.project_name}}`}}/.pre-commit-config.yaml'
       - uv lock --upgrade
       # This can take a while but it's required for the following step to update BuildKit in the docker driver
       - '{{if eq .CLI_ARGS "all"}}docker buildx rm multiplatform || true{{end}}'
