@@ -241,22 +241,25 @@ jobs:
             docker buildx create --use
           "
       - name: Build Docker image
-        shell: bash
+        shell: pwsh
         run: |
-          wsl_project="$(wsl -d Ubuntu-24.04 -- wslpath "$RUNNER_TEMP")/replace-me"
-          wsl -d Ubuntu-24.04 -u root --cd "$wsl_project" -- docker buildx build \
-            --platform linux/amd64 \
-            --pull --load \
-            --build-arg NAME=replace_me \
-            --build-arg "DESCRIPTION=A brief description of the project" \
-            --build-arg "TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
-            --build-arg COMMIT_HASH=smoke-test \
+          # Convert Windows path to WSL path (e.g. D:\a\_temp → /mnt/d/a/_temp)
+          $drive = "$env:RUNNER_TEMP"[0].ToString().ToLower()
+          $rest = "$env:RUNNER_TEMP".Substring(3).Replace('\', '/')
+          $wslProject = "/mnt/$drive/$rest/replace-me"
+          Write-Host "Building from WSL path: $wslProject"
+          wsl -d Ubuntu-24.04 -u root --cd $wslProject -- docker buildx build `
+            --platform linux/amd64 `
+            --pull --load `
+            --build-arg NAME=replace_me `
+            --build-arg "DESCRIPTION=A brief description of the project" `
+            --build-arg COMMIT_HASH=smoke-test `
             -t zenable-io/replace-me:latest .
       - name: Verify Docker image
-        shell: bash
+        shell: pwsh
         run: |
-          wsl -d Ubuntu-24.04 -u root -- docker run --rm --entrypoint python3 \
-            zenable-io/replace-me:latest \
+          wsl -d Ubuntu-24.04 -u root -- docker run --rm --entrypoint python3 `
+            zenable-io/replace-me:latest `
             -c "from replace_me import __version__; print(__version__)"
       - name: Verify zenable CLI
         shell: bash
