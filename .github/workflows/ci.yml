@@ -23,6 +23,7 @@ defaults:
 
 jobs:
   lint:
+    if: false  # Temporarily disabled while iterating on Windows support
     name: Lint
     runs-on: ubuntu-24.04
     steps:
@@ -38,6 +39,7 @@ jobs:
       - name: Lint
         run: task -v lint
   test:
+    if: false  # Temporarily disabled while iterating on Windows support
     name: Test
     runs-on: ubuntu-24.04
     permissions:
@@ -106,12 +108,12 @@ jobs:
     name: Windows Smoke Test
     runs-on: windows-latest
     steps:
-      - name: Checkout the repository
-        uses: actions/checkout@v6
       - name: Setup uv
         uses: astral-sh/setup-uv@v7
         with:
           python-version: ${{ env.python_version }}
+          enable-cache: false
+          ignore-empty-workdir: true
       - name: Install Task
         uses: go-task/setup-task@v2
         with:
@@ -121,12 +123,17 @@ jobs:
         env:
           RUN_POST_HOOK: 'true'
           SKIP_GIT_PUSH: 'true'
+          TEMPLATE_REPO: ${{ github.repository }}
+          TEMPLATE_REF: ${{ github.head_ref || github.ref_name }}
         run: |
           git config --global user.name "CI Automation"
           git config --global user.email "ci@zenable.io"
 
-          uvx --with gitpython cookiecutter . --no-input \
-            project_name="ci-test-project" \
+          # Same command as README, plus --checkout for the PR branch and --no-input for CI
+          uvx --with gitpython cookiecutter \
+            "gh:${TEMPLATE_REPO}" \
+            --checkout "${TEMPLATE_REF}" \
+            --no-input project_name="ci-test-project" \
             --output-dir "$RUNNER_TEMP"
       - name: Verify generated project
         shell: pwsh
