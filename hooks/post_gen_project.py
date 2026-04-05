@@ -11,6 +11,7 @@ import pprint
 import shutil
 import subprocess
 import sys
+import tempfile
 from collections import OrderedDict
 from logging import basicConfig, getLogger
 from pathlib import Path
@@ -205,10 +206,8 @@ def _install_zenable_binary() -> bool:
 
         if sys.platform == "win32":
             installer_key = "install.ps1"
-            cmd = ["powershell", "-ExecutionPolicy", "Bypass", "-Command", "-"]
         else:
             installer_key = "install.sh"
-            cmd = ["bash"]
 
         install_url = metadata["installers"][installer_key]
         expected_checksum = metadata["installer_checksums"][installer_key]
@@ -216,14 +215,30 @@ def _install_zenable_binary() -> bool:
         install_script = _download_url(install_url)
         _verify_checksum(install_script, expected_checksum)
 
+        if sys.platform == "win32":
+            # Write to a temp file because PowerShell's -Command - does not
+            # reliably read scripts from stdin.
+            tmp = tempfile.NamedTemporaryFile(suffix=".ps1", delete=False, mode="wb")
+            tmp.write(install_script)
+            tmp.close()
+            cmd = ["powershell", "-ExecutionPolicy", "Bypass", "-File", tmp.name]
+            input_data = None
+        else:
+            cmd = ["bash"]
+            input_data = install_script
+            tmp = None
+
         result = subprocess.run(
             cmd,
-            input=install_script,
+            input=input_data,
             check=True,
             capture_output=True,
             timeout=120,
             env=env,
         )
+
+        if tmp is not None:
+            Path(tmp.name).unlink(missing_ok=True)
         if result.stdout:
             LOG.info("Zenable installer stdout: %s", result.stdout.decode("utf-8", errors="replace").strip())
         if result.stderr:
