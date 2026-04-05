@@ -23,7 +23,6 @@ defaults:
 
 jobs:
   lint:
-    if: false  # Temporarily disabled while iterating on Windows support
     name: Lint
     runs-on: ubuntu-24.04
     steps:
@@ -39,7 +38,6 @@ jobs:
       - name: Lint
         run: task -v lint
   test:
-    if: false  # Temporarily disabled while iterating on Windows support
     name: Test
     runs-on: ubuntu-24.04
     permissions:
