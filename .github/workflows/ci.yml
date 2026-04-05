@@ -221,6 +221,8 @@ jobs:
           }
 
           Write-Host "Windows smoke test passed: project generated and verified successfully"
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
       - name: Initialize generated project
         shell: bash
         run: |

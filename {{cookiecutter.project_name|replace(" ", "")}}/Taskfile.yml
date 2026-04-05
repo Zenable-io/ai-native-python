@@ -60,7 +60,13 @@ tasks:
       # This fixes an "ERROR: Multiple platforms feature is currently not supported for docker driver" pipeline error
       # Only create our multiplatform builder if it doesn't already exist; otherwise list information about the one that exists
       # It suppresses the inspect output when it's not running in a GitHub Action
-      - docker buildx inspect multiplatform {{ '{{if ne .GITHUB_ACTIONS "true"}}' }}>/dev/null{{ '{{end}}' }} || docker buildx create --name multiplatform --driver docker-container --use
+      # Skip gracefully if docker buildx is not available (e.g. Windows without buildx plugin)
+      - |
+        if ! docker buildx version > /dev/null 2>&1; then
+          echo "docker buildx not available, skipping multiplatform setup"
+          exit 0
+        fi
+        docker buildx inspect multiplatform {{ '{{if ne .GITHUB_ACTIONS "true"}}' }}>/dev/null{{ '{{end}}' }} || docker buildx create --name multiplatform --driver docker-container --use
 
   init:
     desc: Initialize the repo for local use; intended to be run after git clone
