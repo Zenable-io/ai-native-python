@@ -228,10 +228,16 @@ jobs:
             service docker start
           "
 
-          # Create a .bat wrapper so Task's shell (mvdan/sh) finds it on Windows.
-          # WSL auto-translates the inherited CWD from Windows to /mnt/ paths.
+          # Create docker wrappers that route to WSL's Docker.
+          # - .bat for Task's mvdan/sh (Go's exec.LookPath needs a Windows extension)
+          # - bash script for Git Bash steps
           mkdir -p "$HOME/bin"
           printf '@wsl -d Ubuntu-24.04 -u root -- docker %%*\r\n' > "$HOME/bin/docker.bat"
+          cat > "$HOME/bin/docker" << 'WRAPPER'
+          #!/bin/bash
+          exec wsl -d Ubuntu-24.04 -u root -- docker "$@"
+          WRAPPER
+          chmod +x "$HOME/bin/docker"
           echo "$HOME/bin" >> "$GITHUB_PATH"
       - name: Initialize generated project
         shell: bash
