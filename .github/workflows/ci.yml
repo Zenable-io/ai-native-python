@@ -80,7 +80,7 @@ jobs:
       - name: Run SBOM generation
         run: task -v sbom
       - name: Upload SBOM artifacts
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: sbom-files
           path: |
@@ -89,7 +89,7 @@ jobs:
       - name: Check license compliance
         run: task -v license-check
       - name: Upload license check results
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: license-check-results
           path: license-check.json
@@ -97,7 +97,7 @@ jobs:
       - name: Run vulnerability scan
         run: task -v vulnscan
       - name: Upload vulnerability scan results
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: vuln-scan-results
           path: vulns.json
@@ -111,11 +111,11 @@ jobs:
       # out the repo on Windows. Instead, cookiecutter fetches the template
       # directly from the remote branch.
       - name: Setup uv
-        uses: astral-sh/setup-uv@v4
+        uses: astral-sh/setup-uv@v7
         with:
           python-version: ${{ env.python_version }}
       - name: Install Task
-        uses: go-task/setup-task@v1
+        uses: go-task/setup-task@v2
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Generate project from template
