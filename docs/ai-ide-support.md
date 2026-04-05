@@ -11,8 +11,14 @@ When you generate a new project, the post-generation hook automatically installs
 
 **Installation (if the Zenable CLI is not already installed):**
 
+macOS/Linux:
 ```bash
 curl -fsSL https://cli.zenable.app/install.sh | bash
+```
+
+Windows:
+```powershell
+powershell -ExecutionPolicy Bypass -Command "irm https://cli.zenable.app/install.ps1 | iex"
 ```
 
 **IDE Configuration:**
