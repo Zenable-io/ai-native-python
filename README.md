@@ -24,14 +24,19 @@ For more details, see our [documentation](docs/index.md).
 ## Getting Started
 
 1. Create an [empty GitHub repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/creating-a-new-repository)
-1. Ensure you have [`brew`](https://brew.sh/) installed
-1. Generate a project with the same name as the repo you just made:
+1. Install the prerequisites and generate your project:
+
+    **macOS / Linux (Homebrew)**
 
     ```bash
-    # Install the prerequisites
     brew install uv go-task
+    uvx --with gitpython cookiecutter gh:zenable-io/ai-native-python
+    ```
 
-    # Initialize your project
+    **Windows (PowerShell)**
+
+    ```powershell
+    winget install astral-sh.uv Task.Task
     uvx --with gitpython cookiecutter gh:zenable-io/ai-native-python
     ```
 

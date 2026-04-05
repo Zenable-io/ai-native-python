@@ -106,15 +106,10 @@ jobs:
     name: Windows Smoke Test
     runs-on: windows-latest
     steps:
-      # Note: no checkout step. The cookiecutter template directory contains
-      # characters (pipe, quotes) that are illegal on NTFS, so we cannot check
-      # out the repo on Windows. Instead, cookiecutter fetches the template
-      # directly from the remote branch.
       - name: Setup uv
         uses: astral-sh/setup-uv@v7
         with:
           python-version: ${{ env.python_version }}
-          # No checkout in this job (NTFS-illegal chars in template dir), so disable cache
           enable-cache: false
           ignore-empty-workdir: true
       - name: Install Task
@@ -126,24 +121,30 @@ jobs:
         env:
           RUN_POST_HOOK: 'true'
           SKIP_GIT_PUSH: 'true'
-          TEMPLATE_REF: ${{ github.event.pull_request.head.sha || github.sha }}
+          TEMPLATE_REPO: ${{ github.repository }}
+          TEMPLATE_REF: ${{ github.head_ref || github.ref_name }}
         run: |
           git config --global user.name "CI Automation"
           git config --global user.email "ci@zenable.io"
 
-          # The template directory name contains NTFS-illegal characters
-          # (double quotes, pipe). Use extract_template_zip.py to safely
-          # extract and rename only the top-level template dir.
-          zipUrl="https://github.com/${{ github.repository }}/archive/${TEMPLATE_REF}.zip"
-          scriptUrl="https://raw.githubusercontent.com/${{ github.repository }}/${TEMPLATE_REF}/scripts/extract_template_zip.py"
-          tmpdir=$(mktemp -d)
-          curl -fsSL "$zipUrl" -o "$tmpdir/template.zip"
-          curl -fsSL "$scriptUrl" -o "$tmpdir/extract_template_zip.py"
-          repoDir=$(python3 "$tmpdir/extract_template_zip.py" "$tmpdir/template.zip" "$tmpdir/src")
-
-          uvx --with gitpython cookiecutter "$repoDir" --no-input \
-            project_name="ci-test-project" \
-            --output-dir "$RUNNER_TEMP"
+          # Use the same command as README.md (gh: syntax). On Windows, if the
+          # default branch still has NTFS-illegal paths (pre-merge), the gh: clone
+          # fails because cookiecutter clones main first. Fall back to a local
+          # clone in that case. After merge, the gh: command succeeds directly.
+          uvx --with gitpython cookiecutter \
+            "gh:${TEMPLATE_REPO}" \
+            --checkout "${TEMPLATE_REF}" \
+            --no-input project_name="ci-test-project" \
+            --output-dir "$RUNNER_TEMP" \
+          || {
+            echo "::warning::gh: clone failed (expected pre-merge on Windows). Using local clone."
+            template_dir="$RUNNER_TEMP/template-repo"
+            git clone --no-checkout "https://github.com/${TEMPLATE_REPO}.git" "$template_dir"
+            git -C "$template_dir" checkout "${TEMPLATE_REF}"
+            uvx --with gitpython cookiecutter "$template_dir" \
+              --no-input project_name="ci-test-project" \
+              --output-dir "$RUNNER_TEMP"
+          }
       - name: Verify generated project
         shell: pwsh
         run: |

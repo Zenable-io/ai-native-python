@@ -14,5 +14,6 @@ refurb
 skopeo
 syft
 taskfile
+winget
 zenable
 zizmor

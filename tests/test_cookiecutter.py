@@ -220,11 +220,13 @@ def test_autofix_hook(cookies, context):
         "-invalid",  # starts with dash
         "9project",  # starts with number
         "!invalid",  # starts with special character
+        "My Project",  # contains space
+        "has space",  # contains space
     ],
 )
 def test_invalid_project_name_validation(cookies, invalid_name):
     """
-    Test that project names starting with non-alphabetical characters are rejected
+    Test that project names with invalid characters are rejected
     """
     result = cookies.bake(extra_context={"project_name": invalid_name})
 
@@ -238,7 +240,7 @@ def test_invalid_project_name_validation(cookies, invalid_name):
     [
         "ValidProject",  # starts with uppercase
         "validproject",  # starts with lowercase
-        "My Project",  # starts with uppercase, has space
+        "My-Project",  # starts with uppercase, has hyphen
         "a1234",  # starts with lowercase, has numbers
         "Z_project",  # starts with uppercase, has underscore
     ],
