@@ -217,6 +217,31 @@ jobs:
           }
 
           Write-Host "Windows smoke test passed: project generated and verified successfully"
+      - name: Setup WSL with Docker
+        shell: bash
+        run: |
+          wsl --install -d Ubuntu-24.04 --no-launch
+          wsl -d Ubuntu-24.04 -u root -- bash -ec "
+            apt-get update -qq
+            apt-get install -y -qq curl ca-certificates >/dev/null
+            curl -fsSL https://get.docker.com | sh -s -- --quiet
+            service docker start
+          "
+
+          # Create a docker wrapper so Task commands use WSL's Docker.
+          # Pass --cd with the converted CWD so docker build contexts resolve.
+          mkdir -p "$HOME/bin"
+          cat > "$HOME/bin/docker" << 'WRAPPER'
+          #!/bin/bash
+          # Convert Windows CWD to WSL /mnt/ path
+          win_cwd="$(pwd -W 2>/dev/null || pwd)"
+          drive="$(echo "${win_cwd:0:1}" | tr '[:upper:]' '[:lower:]')"
+          rest="${win_cwd:3}"
+          wsl_cwd="/mnt/$drive/$(echo "$rest" | tr '\\' '/')"
+          exec wsl -d Ubuntu-24.04 -u root --cd "$wsl_cwd" -- docker "$@"
+          WRAPPER
+          chmod +x "$HOME/bin/docker"
+          echo "$HOME/bin" >> "$GITHUB_PATH"
       - name: Initialize generated project
         shell: bash
         run: |
@@ -229,37 +254,16 @@ jobs:
         run: |
           cd "$RUNNER_TEMP/replace-me"
           task -v unit-test
-      - name: Setup WSL with Docker
+      - name: Build Docker image
         shell: bash
         run: |
-          wsl --install -d Ubuntu-24.04 --no-launch
-          wsl -d Ubuntu-24.04 -u root -- bash -ec "
-            apt-get update -qq
-            apt-get install -y -qq curl ca-certificates >/dev/null
-            curl -fsSL https://get.docker.com | sh -s -- --quiet
-            service docker start
-            docker buildx create --use
-          "
-      - name: Build Docker image
-        shell: pwsh
-        run: |
-          # Convert Windows path to WSL path (e.g. D:\a\_temp → /mnt/d/a/_temp)
-          $drive = "$env:RUNNER_TEMP"[0].ToString().ToLower()
-          $rest = "$env:RUNNER_TEMP".Substring(3).Replace('\', '/')
-          $wslProject = "/mnt/$drive/$rest/replace-me"
-          Write-Host "Building from WSL path: $wslProject"
-          wsl -d Ubuntu-24.04 -u root --cd $wslProject -- docker buildx build `
-            --platform linux/amd64 `
-            --pull --load `
-            --build-arg NAME=replace_me `
-            --build-arg "DESCRIPTION=A brief description of the project" `
-            --build-arg COMMIT_HASH=smoke-test `
-            -t zenable-io/replace-me:latest .
+          cd "$RUNNER_TEMP/replace-me"
+          task -v build
       - name: Verify Docker image
-        shell: pwsh
+        shell: bash
         run: |
-          wsl -d Ubuntu-24.04 -u root -- docker run --rm --entrypoint python3 `
-            zenable-io/replace-me:latest `
+          docker run --rm --entrypoint python3 \
+            zenable-io/replace-me:latest \
             -c "from replace_me import __version__; print(__version__)"
       - name: Verify zenable CLI
         shell: bash
