@@ -1,0 +1,9 @@
+# Enforce LF line endings for files that must not have CRLF.
+# Without this, Windows `git checkout` converts to CRLF, which breaks bash
+# scripts with errors like: ': invalid option namesh: line 2: set: pipefail'
+*.sh         text eol=lf
+Dockerfile   text eol=lf
+Dockerfile.* text eol=lf
+Makefile     text eol=lf
+*.yml        text eol=lf
+*.yaml       text eol=lf
