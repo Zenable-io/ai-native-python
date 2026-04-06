@@ -93,8 +93,8 @@ tasks:
   update:
     desc: Update the project dev and runtime dependencies
     cmds:
-      # Upgrade uv via brew on macOS/Linux when running locally (not CI)
-      - '{{if and (ne .GITHUB_ACTIONS "true") (ne OS "windows")}}brew upgrade uv{{end}}'
+      # Upgrade uv when running locally (not CI); use brew on macOS/Linux, uv self update on Windows
+      - '{{if ne .GITHUB_ACTIONS "true"}}{{if ne OS "windows"}}brew upgrade uv{{else}}uv self update{{end}}{{end}}'
       - uv tool upgrade --all
       - pre-commit autoupdate --freeze --jobs 4
       # Copy the newly updated config into the project template, excluding the exclude line
