@@ -34,7 +34,7 @@ tasks:
       - pyproject.toml
       - uv.lock
     preconditions:
-      - which uv
+      - uv --version
     cmds:
       # Sync dependencies with uv
       - uv sync --frozen --all-extras
@@ -47,7 +47,7 @@ tasks:
     status:
       # Don't do any of this if you aren't in a git repository; quote to avoid yaml intrepretering the ! as a node tag
       # https://yaml.org/spec/1.2.2/#691-node-tags
-      - '! test -d .git'
+      - '! git rev-parse --git-dir'
     cmds:
       - uv tool install pre-commit
       # Don't run this in pipelines
@@ -173,8 +173,8 @@ tasks:
   update:
     desc: Update the project dev and runtime dependencies
     cmds:
-      # Upgrade uv via brew on macOS/Linux when running locally (not CI)
-      - '{{ '{{if and (ne .GITHUB_ACTIONS "true") (ne OS "windows")}}' }}brew upgrade uv{{ '{{end}}' }}'
+      # Upgrade uv when running locally (not CI); use brew on macOS/Linux, uv self update on Windows
+      - '{{ '{{if ne .GITHUB_ACTIONS "true"}}{{if ne OS "windows"}}' }}brew upgrade uv{{ '{{else}}' }}uv self update{{ '{{end}}{{end}}' }}'
       - uv tool upgrade --all
       - pre-commit autoupdate --freeze --jobs 4
       - uv lock --upgrade
@@ -205,9 +205,9 @@ tasks:
     env:
       GH_TOKEN:
         sh: |
-          if [[ -n "${GH_TOKEN:-}" ]]; then
+          if [ -n "${GH_TOKEN:-}" ]; then
             echo "${GH_TOKEN}"
-          elif command -v gh &> /dev/null && gh auth token &> /dev/null; then
+          elif gh auth token > /dev/null 2>&1; then
             gh auth token
           fi
     cmds:
