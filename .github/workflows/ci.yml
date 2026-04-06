@@ -200,6 +200,35 @@ jobs:
           }
 
           Write-Host "Windows smoke test passed: project generated and verified successfully"
+      - name: Verify shell scripts have LF line endings
+        shell: pwsh
+        run: |
+          $project = Join-Path $env:RUNNER_TEMP "ci-test-project"
+          $failed = $false
+
+          # Check all .sh files for CRLF
+          Get-ChildItem -Path $project -Recurse -Filter "*.sh" | ForEach-Object {
+            $bytes = [System.IO.File]::ReadAllBytes($_.FullName)
+            $content = [System.Text.Encoding]::UTF8.GetString($bytes)
+            if ($content -match "`r`n") {
+              Write-Error "$($_.Name) has CRLF line endings - this breaks bash on Windows"
+              $failed = $true
+            }
+          }
+
+          # Check Dockerfile
+          $dockerfile = Join-Path $project "Dockerfile"
+          if (Test-Path $dockerfile) {
+            $bytes = [System.IO.File]::ReadAllBytes($dockerfile)
+            $content = [System.Text.Encoding]::UTF8.GetString($bytes)
+            if ($content -match "`r`n") {
+              Write-Error "Dockerfile has CRLF line endings - this breaks Docker builds"
+              $failed = $true
+            }
+          }
+
+          if ($failed) { exit 1 }
+          Write-Host "All shell scripts and Dockerfile have correct LF line endings"
       - name: Setup WSL with Docker
         shell: bash
         run: |

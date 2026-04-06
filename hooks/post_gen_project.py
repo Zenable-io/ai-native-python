@@ -313,9 +313,34 @@ def opportunistically_install_zenable_tools() -> None:
         print("=" * 70 + "\n")
 
 
+def normalize_line_endings() -> None:
+    """Normalize CRLF to LF in shell scripts and Dockerfiles.
+
+    On Windows, cookiecutter's template rendering may write CRLF line endings
+    even when the source files have LF. This breaks bash with errors like:
+        ': invalid option namesh: line 2: set: pipefail'
+
+    Uses only stdlib — no new dependencies required.
+    """
+    project_root = Path(".")
+    patterns = ["**/*.sh", "Dockerfile", "Dockerfile.*"]
+    for pattern in patterns:
+        for filepath in project_root.glob(pattern):
+            if not filepath.is_file():
+                continue
+            raw = filepath.read_bytes()
+            if b"\r\n" in raw:
+                filepath.write_bytes(raw.replace(b"\r\n", b"\n"))
+                LOG.debug("Normalized CRLF -> LF in %s", filepath)
+
+
 def run_post_gen_hook():
     """Run post generation hook"""
     try:
+        # Normalize line endings before anything else — bash scripts must have
+        # LF endings or they fail on Windows with Git's CRLF conversion
+        normalize_line_endings()
+
         # Sort and unique the generated dictionary.txt file
         dictionary: Path = Path("./.github/etc/dictionary.txt")
         sorted_uniqued_dictionary: list[str] = sorted(set(dictionary.read_text("utf-8").split("\n")))
