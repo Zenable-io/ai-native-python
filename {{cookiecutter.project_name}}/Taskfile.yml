@@ -18,7 +18,7 @@ vars:
   VERSION:
     sh: "{{ '{{.RUN_SCRIPT}}' }} python -c \"import sys; sys.path.insert(0, 'src'); from {{ '{{.PROJECT_SLUG}}' }} import __version__; print(__version__)\""
   LOCAL_PLATFORM:
-    sh: "bash {{ '{{.SCRIPTS_DIR}}' }}/get_platform.sh"
+    sh: "{{ '{{.RUN_SCRIPT}}' }} {{ '{{.SCRIPTS_DIR}}' }}/get_platform.py"
   # Use PLATFORM if specified, otherwise use LOCAL_PLATFORM
   PLATFORM: '{{ '{{if .PLATFORM}}' }}{{ '{{.PLATFORM}}' }}{{ '{{else}}' }}{{ '{{.LOCAL_PLATFORM}}' }}{{ '{{end}}' }}'
   # Output redirect based on CI environment
@@ -88,7 +88,7 @@ tasks:
       TIMESTAMP:
         sh: '{{ '{{.RUN_SCRIPT}}' }} {{ '{{.SCRIPTS_DIR}}' }}/get_rfc3339_timestamp.py'
       EPOCH:
-        sh: 'bash {{ '{{.SCRIPTS_DIR}}' }}/get_epoch.sh'
+        sh: '{{ '{{.RUN_SCRIPT}}' }} {{ '{{.SCRIPTS_DIR}}' }}/get_epoch.py'
       COMMIT_HASH:
         sh: git rev-parse HEAD
       BUILD_PLATFORM: '{{ '{{if eq .PLATFORM "all"}}' }}{{ '{{.SUPPORTED_PLATFORMS}}' }}{{ '{{else if .PLATFORM}}' }}{{ '{{.PLATFORM}}' }}{{ '{{else}}' }}{{ '{{.LOCAL_PLATFORM}}' }}{{ '{{end}}' }}'
@@ -187,18 +187,7 @@ tasks:
   clean:
     desc: Clean up build artifacts, cache files/directories, temp files, etc.
     cmds:
-      - rm -rf .pytest_cache
-      - rm -rf htmlcov
-      - rm -rf .coverage
-      - rm -rf dist
-      - rm -rf build
-      - rm -rf *.egg-info
-      - rm -f sbom.*.json
-      - rm -f vulns.*.json
-      - rm -f license-check.*.json
-      - rm -f {{ cookiecutter.github_org }}_{{ cookiecutter.project_slug }}_*_*.tar
-      - find . -type d -name __pycache__ -exec rm -rf {} + || true
-      - find . -type f -name '*.pyc' -delete || true
+      - '{{ '{{.RUN_SCRIPT}}' }} {{ '{{.SCRIPTS_DIR}}' }}/clean.py'
 
   release:
     desc: Cut a project release
