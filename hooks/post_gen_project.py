@@ -199,7 +199,7 @@ def _install_zenable_binary() -> bool:
 
     Returns True if installation succeeded, False otherwise.
     """
-    env = {**os.environ, "ZENABLE_YES": "1"}
+    env = {**os.environ, "ZENABLE_NONINTERACTIVE": "1"}
 
     try:
         metadata = _fetch_release_metadata()
@@ -270,30 +270,14 @@ def opportunistically_install_zenable_tools() -> None:
             LOG.warning("Zenable CLI could not be installed.")
             return
 
-        # The installer updates PATH for future shells/steps (e.g. via
-        # GITHUB_PATH or the user's shell profile) but not the current
-        # process.  Add the default install directory so we can find the
-        # binary immediately.
-        zenable_bin_dir = str(Path.home() / ".zenable" / "bin")
-        os.environ["PATH"] = zenable_bin_dir + os.pathsep + os.environ.get("PATH", "")
+        # The installer runs in non-interactive mode (ZENABLE_NONINTERACTIVE=1)
+        # and handles both binary installation and IDE integrations automatically.
+        return
 
-        zenable_bin = _find_zenable_binary()
-        if not zenable_bin:
-            # Diagnostic: log what the installer actually created
-            zenable_dir = Path.home() / ".zenable"
-            if zenable_dir.exists():
-                contents = [str(p.relative_to(zenable_dir)) for p in zenable_dir.rglob("*")]
-                LOG.warning("Install dir %s contents: %s", zenable_dir, contents)
-            else:
-                LOG.warning("Install directory does not exist: %s", zenable_dir)
-            LOG.warning("Current PATH: %s", os.environ.get("PATH", ""))
-            LOG.warning("Zenable CLI was installed but could not be found in PATH or default location.")
-            return
-
-    # Zenable CLI is available, attempt to configure IDE integrations
+    # Zenable CLI is already installed, just configure IDE integrations
     LOG.debug("Zenable CLI found at %s, configuring IDE integrations...", zenable_bin)
     try:
-        subprocess.run([zenable_bin, "install"], check=True, timeout=60)
+        subprocess.run([zenable_bin, "install", "-y"], check=True, timeout=60)
         print("\n" + "=" * 70)
         print("Successfully configured the Zenable AI coding guardrails 🚀")
         print("To start using it, just open the IDE of your choice, login, and you're all set 🤖")
