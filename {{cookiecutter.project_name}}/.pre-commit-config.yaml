@@ -1,8 +1,7 @@
 ---
-exclude: '^{{ cookiecutter.project_name }}/.*'
 repos:
  - repo: https://github.com/astral-sh/ruff-pre-commit
-   rev: 3db93a2be6f214ed722bf7bce095ec1b1715422a  # frozen: v0.14.2
+   rev: c59bba8fb259db0fec2bbb77ad8ba51ea7341b56  # frozen: v0.15.20
    hooks:
      - id: ruff-check
        types_or: [ python, pyi, jupyter ]
@@ -24,14 +23,14 @@ repos:
     - id: end-of-file-fixer
     - id: trailing-whitespace
  - repo: https://github.com/lycheeverse/lychee
-   rev: cef607cddb6279091869bcbb8fb4b906fd4c046c  # frozen: nightly
+   rev: 3d6c1b6bb8d648d6e2949d7e5bd0c9e20d8b41dd  # frozen: nightly
    hooks:
      - id: lychee-docker
        # Keep all other configs in the config file
        args: ["--config", ".github/linters/lychee.toml"]
        types: [markdown]
  - repo: https://github.com/rhysd/actionlint
-   rev: e7d448ef7507c20fc4c88a95d0c448b848cd6127  # frozen: v1.7.8
+   rev: 914e7df21a07ef503a81201c76d2b11c789d3fca  # frozen: v1.7.12
    hooks:
      - id: actionlint-docker
  - repo: https://github.com/koalaman/shellcheck-precommit
@@ -40,17 +39,20 @@ repos:
      - id: shellcheck
        args: [ -x, --source-path=SCRIPTDIR ]
  - repo: https://github.com/trufflesecurity/trufflehog
-   rev: ad6fc8fb446b8fafbf7ea8193d2d6bfd42f45690  # frozen: v3.90.11
+   rev: 00155c9dc586f34d189adc83d3ac2698c2ec551f  # frozen: v3.95.8
    hooks:
      - id: trufflehog
-       # Check the past 2 commits; it's useful to make this go further back than main when running this where main and HEAD are equal
-       entry: trufflehog git file://. --since-commit main~1 --no-verification --fail
+       # Resolve the repo root via git-common-dir so this works in both normal repos and worktrees
+       # (trufflehog doesn't support .git files used by worktrees).
+       # Guard against detached HEAD (e.g. CI) by falling back to the commit SHA.
+       language: system
+       entry: bash -c 'BRANCH=$(git rev-parse --abbrev-ref HEAD); [ "$BRANCH" = "HEAD" ] && BRANCH=$(git rev-parse HEAD); trufflehog git "file://$(cd "$(git rev-parse --git-common-dir)/.." && pwd)" --branch "$BRANCH" --since-commit HEAD~1 --no-verification --fail'
  - repo: https://github.com/python-openapi/openapi-spec-validator
-   rev: a76da2ffdaf698a7fdbd755f89b051fef4c790fd  # frozen: 0.8.0b1
+   rev: bd494d8889b709cc7169c1f879b790dade8b3ca4  # frozen: 0.9.0
    hooks:
     - id: openapi-spec-validator
  - repo: https://github.com/streetsidesoftware/cspell-cli
-   rev: 3749de0c02b93bbbe0eae9d7d72da1ecf3c7a2e0  # frozen: v9.2.0
+   rev: ea11f9efc0bec520073405bc30552da887ba71bc  # frozen: v10.0.1
    hooks:
      - id: cspell
        types: [markdown]
