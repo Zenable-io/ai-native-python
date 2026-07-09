@@ -36,7 +36,7 @@ tasks:
     status:
       # Don't do any of this if you aren't in a git repository; quote to avoid yaml intrepretering the ! as a node tag
       # https://yaml.org/spec/1.2.2/#691-node-tags
-      - '! test -d .git'
+      - '! git rev-parse --git-dir'
     cmds:
       - uv tool install pre-commit
       # Don't run this in pipelines
@@ -49,7 +49,7 @@ tasks:
       # This fixes an "ERROR: Multiple platforms feature is currently not supported for docker driver" pipeline error
       # Only create our multiplatform builder if it doesn't already exist; otherwise list information about the one that exists
       # It suppresses the inspect output when it's not running in a GitHub Action
-      - docker buildx inspect multiplatform {{if ne .GITHUB_ACTIONS "true"}}>/dev/null{{end}} || docker buildx create --name multiplatform --driver docker-container --use
+      - docker buildx inspect multiplatform {{if ne .GITHUB_ACTIONS "true"}}>/dev/null{{end}} 2>/dev/null || docker buildx create --name multiplatform --driver docker-container --use
 
   init:
     desc: Initialize the repo for local use; intended to be run after git clone
@@ -93,12 +93,12 @@ tasks:
   update:
     desc: Update the project dev and runtime dependencies
     cmds:
-      # This currently assumes uv was installed via uv (locally); we will want to make it more flexible in the future
-      - '{{if ne .GITHUB_ACTIONS "true"}}brew upgrade uv{{end}}'
+      # Upgrade uv when running locally (not CI); use brew on macOS/Linux, uv self update on Windows
+      - '{{if ne .GITHUB_ACTIONS "true"}}{{if ne OS "windows"}}brew upgrade uv{{else}}uv self update{{end}}{{end}}'
       - uv tool upgrade --all
       - pre-commit autoupdate --freeze --jobs 4
       # Copy the newly updated config into the project template, excluding the exclude line
-      - cat .pre-commit-config.yaml | grep -v ^exclude > '{{`{{cookiecutter.project_name|replace(" ", "")}}`}}/.pre-commit-config.yaml'
+      - cat .pre-commit-config.yaml | grep -v ^exclude > '{{`{{cookiecutter.project_name}}`}}/.pre-commit-config.yaml'
       - uv lock --upgrade
       # This can take a while but it's required for the following step to update BuildKit in the docker driver
       - '{{if eq .CLI_ARGS "all"}}docker buildx rm multiplatform || true{{end}}'
@@ -128,9 +128,9 @@ tasks:
     env:
       GH_TOKEN:
         sh: |
-          if [[ -n "${GH_TOKEN:-}" ]]; then
+          if [ -n "${GH_TOKEN:-}" ]; then
             echo "${GH_TOKEN}"
-          elif command -v gh &> /dev/null && gh auth token &> /dev/null; then
+          elif gh auth token > /dev/null 2>&1; then
             gh auth token
           fi
     cmds:
@@ -152,6 +152,8 @@ tasks:
           -w /src \
           anchore/syft:latest \
           /src \
+          --source-name={{.PROJECT_SLUG}} \
+          --source-version={{.VERSION}} \
           -o syft-json=sbom.syft.json \
           -o spdx-json=sbom.spdx.json \
           -o cyclonedx-json=sbom.cyclonedx.json

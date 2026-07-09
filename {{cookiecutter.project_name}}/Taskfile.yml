@@ -13,12 +13,12 @@ vars:
   PROJECT_SLUG: {{ cookiecutter.project_slug }}
   PYTHON_VERSION: {{ cookiecutter.python_version }}
   SUPPORTED_PLATFORMS: 'linux/amd64,linux/arm64'
-  VERSION:
-    sh: uv run python -c 'from src.{{ '{{.PROJECT_SLUG}}' }} import __version__; print(__version__)'
   RUN_SCRIPT: 'uv run --frozen'
   SCRIPTS_DIR: 'scripts'
+  VERSION:
+    sh: "{{ '{{.RUN_SCRIPT}}' }} python -c \"import sys; sys.path.insert(0, 'src'); from {{ '{{.PROJECT_SLUG}}' }} import __version__; print(__version__)\""
   LOCAL_PLATFORM:
-    sh: "{{ '{{.RUN_SCRIPT}}' }} {{ '{{.SCRIPTS_DIR}}' }}/get_platform.sh"
+    sh: "{{ '{{.RUN_SCRIPT}}' }} {{ '{{.SCRIPTS_DIR}}' }}/get_platform.py"
   # Use PLATFORM if specified, otherwise use LOCAL_PLATFORM
   PLATFORM: '{{ '{{if .PLATFORM}}' }}{{ '{{.PLATFORM}}' }}{{ '{{else}}' }}{{ '{{.LOCAL_PLATFORM}}' }}{{ '{{end}}' }}'
   # Output redirect based on CI environment
@@ -34,7 +34,7 @@ tasks:
       - pyproject.toml
       - uv.lock
     preconditions:
-      - which uv
+      - uv --version
     cmds:
       # Sync dependencies with uv
       - uv sync --frozen --all-extras
@@ -47,7 +47,7 @@ tasks:
     status:
       # Don't do any of this if you aren't in a git repository; quote to avoid yaml intrepretering the ! as a node tag
       # https://yaml.org/spec/1.2.2/#691-node-tags
-      - '! test -d .git'
+      - '! git rev-parse --git-dir'
     cmds:
       - uv tool install pre-commit
       # Don't run this in pipelines
@@ -60,7 +60,7 @@ tasks:
       # This fixes an "ERROR: Multiple platforms feature is currently not supported for docker driver" pipeline error
       # Only create our multiplatform builder if it doesn't already exist; otherwise list information about the one that exists
       # It suppresses the inspect output when it's not running in a GitHub Action
-      - docker buildx inspect multiplatform {{ '{{if ne .GITHUB_ACTIONS "true"}}' }}>/dev/null{{ '{{end}}' }} || docker buildx create --name multiplatform --driver docker-container --use
+      - docker buildx inspect multiplatform {{ '{{if ne .GITHUB_ACTIONS "true"}}' }}>/dev/null{{ '{{end}}' }} 2>/dev/null || docker buildx create --name multiplatform --driver docker-container --use
 
   init:
     desc: Initialize the repo for local use; intended to be run after git clone
@@ -88,7 +88,7 @@ tasks:
       TIMESTAMP:
         sh: '{{ '{{.RUN_SCRIPT}}' }} {{ '{{.SCRIPTS_DIR}}' }}/get_rfc3339_timestamp.py'
       EPOCH:
-        sh: '{{ '{{.RUN_SCRIPT}}' }} {{ '{{.SCRIPTS_DIR}}' }}/get_epoch.sh'
+        sh: '{{ '{{.RUN_SCRIPT}}' }} {{ '{{.SCRIPTS_DIR}}' }}/get_epoch.py'
       COMMIT_HASH:
         sh: git rev-parse HEAD
       BUILD_PLATFORM: '{{ '{{if eq .PLATFORM "all"}}' }}{{ '{{.SUPPORTED_PLATFORMS}}' }}{{ '{{else if .PLATFORM}}' }}{{ '{{.PLATFORM}}' }}{{ '{{else}}' }}{{ '{{.LOCAL_PLATFORM}}' }}{{ '{{end}}' }}'
@@ -173,8 +173,8 @@ tasks:
   update:
     desc: Update the project dev and runtime dependencies
     cmds:
-      # This currently assumes uv was installed via uv (locally); we will want to make it more flexible in the future
-      - '{{ '{{if ne .GITHUB_ACTIONS "true"}}' }}brew upgrade uv{{ '{{end}}' }}'
+      # Upgrade uv when running locally (not CI); use brew on macOS/Linux, uv self update on Windows
+      - '{{ '{{if ne .GITHUB_ACTIONS "true"}}{{if ne OS "windows"}}' }}brew upgrade uv{{ '{{else}}' }}uv self update{{ '{{end}}{{end}}' }}'
       - uv tool upgrade --all
       - pre-commit autoupdate --freeze --jobs 4
       - uv lock --upgrade
@@ -187,27 +187,16 @@ tasks:
   clean:
     desc: Clean up build artifacts, cache files/directories, temp files, etc.
     cmds:
-      - rm -rf .pytest_cache
-      - rm -rf htmlcov
-      - rm -rf .coverage
-      - rm -rf dist
-      - rm -rf build
-      - rm -rf *.egg-info
-      - rm -f sbom.*.json
-      - rm -f vulns.*.json
-      - rm -f license-check.*.json
-      - rm -f {{ cookiecutter.github_org }}_{{ cookiecutter.project_slug }}_*_*.tar
-      - find . -type d -name __pycache__ -exec rm -rf {} + || true
-      - find . -type f -name '*.pyc' -delete || true
+      - '{{ '{{.RUN_SCRIPT}}' }} {{ '{{.SCRIPTS_DIR}}' }}/clean.py'
 
   release:
     desc: Cut a project release
     env:
       GH_TOKEN:
         sh: |
-          if [[ -n "${GH_TOKEN:-}" ]]; then
+          if [ -n "${GH_TOKEN:-}" ]; then
             echo "${GH_TOKEN}"
-          elif command -v gh &> /dev/null && gh auth token &> /dev/null; then
+          elif gh auth token > /dev/null 2>&1; then
             gh auth token
           fi
     cmds:

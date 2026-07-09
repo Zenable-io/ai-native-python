@@ -24,14 +24,14 @@ runs:
         echo "run_script=${run_script}" | tee -a "${GITHUB_ENV}"
 
     - name: Setup uv
-      uses: astral-sh/setup-uv@v4
+      uses: astral-sh/setup-uv@v7
       with:
         enable-cache: true
         cache-dependency-glob: "**/uv.lock"
         python-version: ${{ "{{ inputs.python-version }}" }}
 
     - name: Install Task
-      uses: go-task/setup-task@v1
+      uses: go-task/setup-task@v2
       with:
         # Passing a repo token reduces the likelihood of API rate limit exceeded
         repo-token: ${{ "{{ inputs.token }}" }}
@@ -74,7 +74,7 @@ runs:
         echo "PY=$(python -VV | sha256sum | cut -d' ' -f1)" | tee -a "${GITHUB_ENV}"
 
     - name: Cache pre-commit environments
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: ~/.cache/pre-commit
         key: pre-commit|${{ "{{ env.PY }}" }}|${{ "{{ hashFiles(format('{0}/.pre-commit-config.yaml', inputs.working-directory)) }}" }}

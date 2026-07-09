@@ -4,15 +4,18 @@ Post-project generation hook
 """
 
 import datetime
+import hashlib
 import json
 import os
 import pprint
 import shutil
 import subprocess
 import sys
+import tempfile
 from collections import OrderedDict
 from logging import basicConfig, getLogger
 from pathlib import Path
+from urllib.request import HTTPSHandler, build_opener
 
 import yaml
 
@@ -141,30 +144,143 @@ def notify_dockerhub_secrets() -> None:
     print("=" * 70 + "\n")
 
 
-def opportunistically_install_zenable_tools() -> None:
-    """Opportunistically install zenable-mcp if uvx is available."""
-    # Check if uvx is not available
-    if not shutil.which("uvx"):
-        # uvx is not available, notify the user
-        print("\n" + "=" * 70)
-        print("NOTE: Skipped configuring the Zenable AI coding guardrails")
-        print("=" * 70)
-        print("\nConfiguring the Zenable AI coding guardrails requires the uv package manager.")
-        print("To set this up later:")
-        print("\n1. Install uv via https://docs.astral.sh/uv/getting-started/installation/")
-        print("2. Run: uvx zenable-mcp@latest install")
-        print("=" * 70 + "\n")
+def _find_zenable_binary() -> str | None:
+    """Find the zenable binary in PATH or the default install location."""
+    zenable_path = shutil.which("zenable")
+    if zenable_path:
+        return zenable_path
 
-        LOG.warning("uvx was not found in PATH, so the Zenable integrations were not installed.")
+    # Check the default install location
+    binary_name = "zenable.exe" if sys.platform == "win32" else "zenable"
+    default_path = Path.home() / ".zenable" / "bin" / binary_name
+    if default_path.is_file():
+        return str(default_path)
+
+    return None
+
+
+ZENABLE_RELEASE_URL = "https://cli.zenable.app/zenable/latest"
+
+
+_https_opener = build_opener(HTTPSHandler())
+
+
+def _fetch_release_metadata() -> dict:
+    """Fetch the Zenable CLI release metadata from cli.zenable.app."""
+    with _https_opener.open(ZENABLE_RELEASE_URL, timeout=30) as resp:
+        return json.loads(resp.read())
+
+
+def _download_url(url: str) -> bytes:
+    """Download a URL and return the raw bytes."""
+    with _https_opener.open(url, timeout=60) as resp:
+        return resp.read()
+
+
+def _verify_checksum(data: bytes, expected_sha256: str) -> None:
+    """Verify SHA-256 checksum of data against the expected value.
+
+    Raises ValueError if the checksum does not match.
+    """
+    actual = hashlib.sha256(data).hexdigest()
+    if actual != expected_sha256:
+        msg = f"Checksum mismatch: expected {expected_sha256}, got {actual}"
+        raise ValueError(msg)
+
+
+def _install_zenable_binary() -> bool:
+    """Install the zenable CLI binary.
+
+    Fetches the release metadata from cli.zenable.app/zenable/latest,
+    downloads the appropriate installer for the current platform, verifies
+    its SHA-256 checksum, then executes it non-interactively. The install
+    script itself also performs cosign signature verification of the
+    downloaded binary.
+
+    Returns True if installation succeeded, False otherwise.
+    """
+    env = {**os.environ, "ZENABLE_NONINTERACTIVE": "1"}
+
+    try:
+        metadata = _fetch_release_metadata()
+
+        if sys.platform == "win32":
+            installer_key = "install.ps1"
+        else:
+            installer_key = "install.sh"
+
+        install_url = metadata["installers"][installer_key]
+        expected_checksum = metadata["installer_checksums"][installer_key]
+
+        install_script = _download_url(install_url)
+        _verify_checksum(install_script, expected_checksum)
+
+        if sys.platform == "win32":
+            # Write to a temp file because PowerShell's -Command - does not
+            # reliably read scripts from stdin.
+            tmp = tempfile.NamedTemporaryFile(suffix=".ps1", delete=False, mode="wb")
+            tmp.write(install_script)
+            tmp.close()
+            cmd = ["powershell", "-ExecutionPolicy", "Bypass", "-File", tmp.name]
+            input_data = None
+        else:
+            cmd = ["bash"]
+            input_data = install_script
+            tmp = None
+
+        result = subprocess.run(
+            cmd,
+            input=input_data,
+            check=True,
+            capture_output=True,
+            timeout=120,
+            env=env,
+        )
+
+        if tmp is not None:
+            Path(tmp.name).unlink(missing_ok=True)
+        if result.stdout:
+            LOG.info("Zenable installer stdout: %s", result.stdout.decode("utf-8", errors="replace").strip())
+        if result.stderr:
+            LOG.info("Zenable installer stderr: %s", result.stderr.decode("utf-8", errors="replace").strip())
+        return True
+    except ValueError:
+        LOG.warning("Zenable install script checksum verification failed")
+        return False
+    except Exception:
+        LOG.warning("Failed to install the Zenable CLI binary")
+        return False
+
+
+def opportunistically_install_zenable_tools() -> None:
+    """Opportunistically install the Zenable CLI and configure IDE integrations."""
+    zenable_bin = _find_zenable_binary()
+
+    if not zenable_bin:
+        LOG.debug("Zenable CLI not found, attempting to install...")
+        if not _install_zenable_binary():
+            print("\n" + "=" * 70)
+            print("NOTE: Skipped configuring the Zenable AI coding guardrails")
+            print("=" * 70)
+            print("\nTo set this up later, install the Zenable CLI:")
+            print("\n  curl -fsSL https://cli.zenable.app/install.sh | bash")
+            print("\nThen run: zenable install")
+            print("=" * 70 + "\n")
+
+            LOG.warning("Zenable CLI could not be installed.")
+            return
+
+        # The installer runs in non-interactive mode (ZENABLE_NONINTERACTIVE=1)
+        # and handles both binary installation and IDE integrations automatically.
         return
 
-    # uvx is available, attempt to install zenable-mcp
-    LOG.debug("uvx is available in PATH, attempting to install the Zenable tools...")
+    # Zenable CLI is already installed, just configure IDE integrations
+    LOG.debug("Zenable CLI found at %s, configuring IDE integrations...", zenable_bin)
     try:
-        subprocess.run(["uvx", "zenable-mcp@latest", "install"], check=True, timeout=60)
+        subprocess.run([zenable_bin, "install", "-y"], check=True, timeout=60)
         print("\n" + "=" * 70)
         print("Successfully configured the Zenable AI coding guardrails 🚀")
-        print("To start using it, just open the IDE of your choice, login to the MCP server, and you're all set 🤖")
+        print("To start using it, just open the IDE of your choice, login, and you're all set 🤖")
         print("Learn more at https://docs.zenable.io")
         print("=" * 70 + "\n")
     except Exception:
@@ -174,16 +290,41 @@ def opportunistically_install_zenable_tools() -> None:
         print("WARNING: Failed to configure the Zenable AI coding guardrails")
         print("=" * 70)
         print("You can retry it later by running:")
-        print("\n  uvx zenable-mcp@latest install")
+        print("\n  zenable install")
         print("\nTo report issues, please contact:")
         print("  • https://zenable.io/feedback")
         print("  • support@zenable.io")
         print("=" * 70 + "\n")
 
 
+def normalize_line_endings() -> None:
+    """Normalize CRLF to LF in shell scripts and Dockerfiles.
+
+    On Windows, cookiecutter's template rendering may write CRLF line endings
+    even when the source files have LF. This breaks bash with errors like:
+        ': invalid option namesh: line 2: set: pipefail'
+
+    Uses only stdlib — no new dependencies required.
+    """
+    project_root = Path(".")
+    patterns = ["**/*.sh", "Dockerfile", "Dockerfile.*"]
+    for pattern in patterns:
+        for filepath in project_root.glob(pattern):
+            if not filepath.is_file():
+                continue
+            raw = filepath.read_bytes()
+            if b"\r\n" in raw:
+                filepath.write_bytes(raw.replace(b"\r\n", b"\n"))
+                LOG.debug("Normalized CRLF -> LF in %s", filepath)
+
+
 def run_post_gen_hook():
     """Run post generation hook"""
     try:
+        # Normalize line endings before anything else — bash scripts must have
+        # LF endings or they fail on Windows with Git's CRLF conversion
+        normalize_line_endings()
+
         # Sort and unique the generated dictionary.txt file
         dictionary: Path = Path("./.github/etc/dictionary.txt")
         sorted_uniqued_dictionary: list[str] = sorted(set(dictionary.read_text("utf-8").split("\n")))

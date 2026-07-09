@@ -212,6 +212,100 @@ def test_autofix_hook(cookies, context):
 
 
 @pytest.mark.unit
+def test_gitattributes_exists(cookies):
+    """
+    Test that generated projects include a .gitattributes file
+    to enforce LF line endings for shell scripts and Dockerfiles.
+    """
+    os.environ["RUN_POST_HOOK"] = "false"
+
+    result = cookies.bake()
+
+    assert result.exit_code == 0
+    assert result.exception is None
+
+    gitattributes = result.project_path / ".gitattributes"
+    assert gitattributes.is_file(), ".gitattributes file must exist in generated project"
+
+    content = gitattributes.read_text(encoding="utf-8")
+    assert "*.sh" in content, ".gitattributes must enforce line endings for shell scripts"
+    assert "Dockerfile" in content, ".gitattributes must enforce line endings for Dockerfiles"
+
+
+@pytest.mark.unit
+def test_shell_scripts_have_lf_line_endings(cookies):
+    """
+    Test that all shell scripts in generated projects have LF line endings,
+    not CRLF. CRLF line endings break bash on Windows with errors like:
+    ': invalid option namesh: line 2: set: pipefail'
+    """
+    os.environ["RUN_POST_HOOK"] = "false"
+
+    result = cookies.bake()
+
+    assert result.exit_code == 0
+    assert result.exception is None
+
+    sh_files = list(result.project_path.glob("**/*.sh"))
+    assert sh_files, "Expected at least one .sh file in generated project"
+
+    for sh_file in sh_files:
+        raw_content = sh_file.read_bytes()
+        assert b"\r\n" not in raw_content, f"{sh_file.name} contains CRLF line endings — this breaks bash on Windows"
+
+
+@pytest.mark.unit
+def test_dockerfile_has_lf_line_endings(cookies):
+    """
+    Test that the Dockerfile in generated projects has LF line endings.
+    CRLF line endings cause Docker build failures.
+    """
+    os.environ["RUN_POST_HOOK"] = "false"
+
+    result = cookies.bake()
+
+    assert result.exit_code == 0
+    assert result.exception is None
+
+    dockerfile = result.project_path / "Dockerfile"
+    assert dockerfile.is_file(), "Dockerfile must exist in generated project"
+
+    raw_content = dockerfile.read_bytes()
+    assert b"\r\n" not in raw_content, "Dockerfile contains CRLF line endings — this breaks Docker builds"
+
+
+@pytest.mark.unit
+def test_no_dead_shell_scripts(cookies):
+    """
+    Test that all shell scripts in the generated project are referenced
+    by at least one other file (Taskfile.yml, CI workflows, etc.).
+    """
+    os.environ["RUN_POST_HOOK"] = "false"
+
+    result = cookies.bake()
+
+    assert result.exit_code == 0
+    assert result.exception is None
+
+    sh_files = list(result.project_path.glob("scripts/*.sh"))
+    assert sh_files, "Expected at least one .sh file in generated project"
+
+    # Collect all non-.sh file content to search for references
+    all_content = ""
+    for f in result.project_path.rglob("*"):
+        if f.is_file() and f.suffix != ".sh" and ".git/" not in str(f):
+            try:
+                all_content += f.read_text(encoding="utf-8", errors="ignore")
+            except (IsADirectoryError, PermissionError):
+                pass
+
+    for sh_file in sh_files:
+        assert sh_file.name in all_content, (
+            f"scripts/{sh_file.name} is dead code — not referenced by any other file in the project"
+        )
+
+
+@pytest.mark.unit
 @pytest.mark.parametrize(
     "invalid_name",
     [
@@ -220,11 +314,13 @@ def test_autofix_hook(cookies, context):
         "-invalid",  # starts with dash
         "9project",  # starts with number
         "!invalid",  # starts with special character
+        "My Project",  # contains space
+        "has space",  # contains space
     ],
 )
 def test_invalid_project_name_validation(cookies, invalid_name):
     """
-    Test that project names starting with non-alphabetical characters are rejected
+    Test that project names with invalid characters are rejected
     """
     result = cookies.bake(extra_context={"project_name": invalid_name})
 
@@ -238,7 +334,7 @@ def test_invalid_project_name_validation(cookies, invalid_name):
     [
         "ValidProject",  # starts with uppercase
         "validproject",  # starts with lowercase
-        "My Project",  # starts with uppercase, has space
+        "My-Project",  # starts with uppercase, has hyphen
         "a1234",  # starts with lowercase, has numbers
         "Z_project",  # starts with uppercase, has underscore
     ],

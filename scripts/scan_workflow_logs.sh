@@ -82,6 +82,11 @@ find . -type f -name "*.txt" | while IFS= read -r logfile; do
     # Sanitize content to prevent command injection and log poisoning
     sanitized_content=$(echo "$content" | tr -d '\n\r' | cut -c1-200)
 
+    # Skip JSON data lines (e.g. SBOM/license check output with package names like "deprecated")
+    if echo "$content" | grep -qE '"(id|name)":\s*"'; then
+      continue
+    fi
+
     # Determine the type of issue and output both annotation and count
     if echo "$content" | grep -qiE '\berror\b'; then
       echo "::error file=$job_name,line=$line_num::$sanitized_content"
