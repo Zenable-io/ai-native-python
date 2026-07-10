@@ -97,8 +97,11 @@ tasks:
       - '{{if ne .GITHUB_ACTIONS "true"}}{{if ne OS "windows"}}brew upgrade uv{{else}}uv self update{{end}}{{end}}'
       - uv tool upgrade --all
       - pre-commit autoupdate --freeze --jobs 4
-      # Copy the newly updated config into the project template, excluding the exclude line
-      - cat .pre-commit-config.yaml | grep -v ^exclude > '{{`{{cookiecutter.project_name}}`}}/.pre-commit-config.yaml'
+      # Copy the newly updated config into the project template, rewriting the exclude line into its renderable Jinja form
+      # (the root config's escaped regex is not valid Jinja and would break cookiecutter rendering)
+      - >-
+        sed "s|^exclude: .*|exclude: '^{{`{{ cookiecutter.project_name }}`}}/.*'|"
+        .pre-commit-config.yaml > '{{`{{cookiecutter.project_name}}`}}/.pre-commit-config.yaml'
       - uv lock --upgrade
       # This can take a while but it's required for the following step to update BuildKit in the docker driver
       - '{{if eq .CLI_ARGS "all"}}docker buildx rm multiplatform || true{{end}}'
