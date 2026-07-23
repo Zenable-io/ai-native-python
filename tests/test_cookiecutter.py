@@ -156,17 +156,23 @@ def test_dockerhub_release_authentication(cookies, dockerhub_subscription):
         assert "\n  publish:\n" not in taskfile
     elif dockerhub_subscription in {"team", "business"}:
         assert "\n  publish:\n" in taskfile
+        assert "uses: docker/setup-qemu-action@v3\n\n      - name: Login to Docker Hub" in release_workflow
         assert "id-token: write" in release_workflow
-        assert "uses: docker/login-action@v4" in release_workflow
+        assert "uses: docker/login-action@v4\n        env:" in release_workflow
         assert "DOCKERHUB_OIDC_CONNECTIONID: ${{ vars.DOCKERHUB_OIDC_CONNECTIONID }}" in release_workflow
-        assert "username: ${{ vars.DOCKERHUB_ORGANIZATION }}" in release_workflow
+        assert (
+            "username: ${{ vars.DOCKERHUB_ORGANIZATION }}\n\n      - name: Build and publish multiplatform Docker image"
+        ) in release_workflow
         assert "DOCKERHUB_PAT" not in release_workflow
     else:
         assert "\n  publish:\n" in taskfile
+        assert "uses: docker/setup-qemu-action@v3\n\n      - name: Login to Docker Hub" in release_workflow
         assert "id-token: write" not in release_workflow
-        assert "uses: docker/login-action@v4" in release_workflow
+        assert "uses: docker/login-action@v4\n        with:" in release_workflow
         assert "username: ${{ secrets.DOCKERHUB_USERNAME }}" in release_workflow
-        assert "password: ${{ secrets.DOCKERHUB_PAT }}" in release_workflow
+        assert (
+            "password: ${{ secrets.DOCKERHUB_PAT }}\n\n      - name: Build and publish multiplatform Docker image"
+        ) in release_workflow
         assert "DOCKERHUB_OIDC_CONNECTIONID" not in release_workflow
 
 

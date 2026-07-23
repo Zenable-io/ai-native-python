@@ -55,10 +55,8 @@ jobs:
     needs: release
     runs-on: ubuntu-24.04
     permissions:
-      contents: read
-{% if cookiecutter.dockerhub_subscription in ['team', 'business'] %}
-      id-token: write
-{% endif %}
+      contents: read{% if cookiecutter.dockerhub_subscription in ['team', 'business'] %}
+      id-token: write{% endif %}
     steps:
       - name: Checkout the repository
         uses: actions/checkout@v6
@@ -77,17 +75,14 @@ jobs:
         uses: docker/setup-qemu-action@v3
 
       - name: Login to Docker Hub
-        uses: docker/login-action@v4
-{% if cookiecutter.dockerhub_subscription in ['team', 'business'] %}
+        uses: docker/login-action@v4{% if cookiecutter.dockerhub_subscription in ['team', 'business'] %}
         env:
           DOCKERHUB_OIDC_CONNECTIONID: ${{ "{{ vars.DOCKERHUB_OIDC_CONNECTIONID }}" }}
         with:
-          username: ${{ "{{ vars.DOCKERHUB_ORGANIZATION }}" }}
-{% else %}
+          username: ${{ "{{ vars.DOCKERHUB_ORGANIZATION }}" }}{% else %}
         with:
           username: ${{ "{{ secrets.DOCKERHUB_USERNAME }}" }}
-          password: ${{ "{{ secrets.DOCKERHUB_PAT }}" }}
-{% endif %}
+          password: ${{ "{{ secrets.DOCKERHUB_PAT }}" }}{% endif %}
 
       - name: Build and publish multiplatform Docker image
         run: |
