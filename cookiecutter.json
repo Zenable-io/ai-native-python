@@ -7,7 +7,16 @@
   "github_org": "zenable-io",
   "project_owner_github_username": "jonzeolla",
   "python_version": ["3.13", "3.12", "3.11"],
-  "dockerhub": ["no", "yes"],
+  "dockerhub_subscription": ["none", "personal", "team", "business"],
   "public": ["no", "yes"],
-  "license": ["NONE", "MIT", "BSD-3-Clause"]
+  "license": ["NONE", "MIT", "BSD-3-Clause"],
+  "__prompts__": {
+    "dockerhub_subscription": {
+      "__prompt__": "Select your Docker Hub subscription; choose none to disable Docker Hub publishing",
+      "none": "None — disable Docker Hub publishing",
+      "personal": "Personal — authenticate with username and PAT",
+      "team": "Team — authenticate with OIDC",
+      "business": "Business — authenticate with OIDC"
+    }
+  }
 }
