@@ -77,4 +77,4 @@ The `dockerhub_subscription` choice controls publishing and authentication:
   generated repository write access. Add `DOCKERHUB_ORGANIZATION` and `DOCKERHUB_OIDC_CONNECTIONID` as GitHub Actions variables.
 
 Personal subscriptions use the standard Docker Hub login. Team and Business subscriptions exchange the GitHub identity token for a short-lived Docker Hub token.
-The generated README and setup reminder describe only the selected authentication path.
+The setup reminder describes only the selected authentication path.

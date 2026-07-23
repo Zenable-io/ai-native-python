@@ -149,12 +149,10 @@ def test_dockerhub_release_authentication(cookies, dockerhub_subscription):
 
     assert result.exit_code == 0
     release_workflow = (result.project_path / ".github" / "workflows" / "release.yml").read_text(encoding="utf-8")
-    readme = (result.project_path / "README.md").read_text(encoding="utf-8")
     taskfile = (result.project_path / "Taskfile.yml").read_text(encoding="utf-8")
 
     if dockerhub_subscription == "none":
         assert "publish-docker:" not in release_workflow
-        assert "## Docker Hub Publishing" not in readme
         assert "\n  publish:\n" not in taskfile
     elif dockerhub_subscription in {"team", "business"}:
         assert "\n  publish:\n" in taskfile
@@ -163,8 +161,6 @@ def test_dockerhub_release_authentication(cookies, dockerhub_subscription):
         assert "DOCKERHUB_OIDC_CONNECTIONID: ${{ vars.DOCKERHUB_OIDC_CONNECTIONID }}" in release_workflow
         assert "username: ${{ vars.DOCKERHUB_ORGANIZATION }}" in release_workflow
         assert "DOCKERHUB_PAT" not in release_workflow
-        assert "Docker Hub OIDC" in readme
-        assert "DOCKERHUB_PAT" not in readme
     else:
         assert "\n  publish:\n" in taskfile
         assert "id-token: write" not in release_workflow
@@ -172,8 +168,6 @@ def test_dockerhub_release_authentication(cookies, dockerhub_subscription):
         assert "username: ${{ secrets.DOCKERHUB_USERNAME }}" in release_workflow
         assert "password: ${{ secrets.DOCKERHUB_PAT }}" in release_workflow
         assert "DOCKERHUB_OIDC_CONNECTIONID" not in release_workflow
-        assert "Docker Hub OIDC" not in readme
-        assert "DOCKERHUB_PAT" in readme
 
 
 @pytest.mark.integration
