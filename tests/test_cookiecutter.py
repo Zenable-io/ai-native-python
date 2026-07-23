@@ -33,6 +33,8 @@ def render_config(*, config: dict) -> dict:
     """Render the provided config"""
     rendered_config: dict[str, str | list] = {}
     for key, value in config.items():
+        if key.startswith("__"):
+            continue
         if isinstance(value, str):
             # Sanitize by removing the "cookiecutter." prefix
             sanitized_template = value.replace("cookiecutter.", "")
@@ -124,6 +126,54 @@ def test_supported_options(cookies, context_override):
     files = build_files_list(str(result.project_path))
     assert files
     check_files(files)
+
+
+@pytest.mark.unit
+def test_dockerhub_subscription_prompt():
+    """Offer one Docker Hub subscription question that can disable publishing."""
+    config = get_config()
+
+    assert config["dockerhub_subscription"] == ["none", "personal", "team", "business"]
+    prompt = config["__prompts__"]["dockerhub_subscription"]
+    assert prompt["__prompt__"] == "Select your Docker Hub subscription; choose none to disable Docker Hub publishing"
+    assert prompt["none"] == "None — disable Docker Hub publishing"
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize("dockerhub_subscription", ["none", "personal", "team", "business"])
+def test_dockerhub_release_authentication(cookies, dockerhub_subscription):
+    """Render the selected Docker Hub authentication path."""
+    os.environ["RUN_POST_HOOK"] = "false"
+
+    result = cookies.bake(extra_context={"dockerhub_subscription": dockerhub_subscription})
+
+    assert result.exit_code == 0
+    release_workflow = (result.project_path / ".github" / "workflows" / "release.yml").read_text(encoding="utf-8")
+    readme = (result.project_path / "README.md").read_text(encoding="utf-8")
+    taskfile = (result.project_path / "Taskfile.yml").read_text(encoding="utf-8")
+
+    if dockerhub_subscription == "none":
+        assert "publish-docker:" not in release_workflow
+        assert "## Docker Hub Publishing" not in readme
+        assert "\n  publish:\n" not in taskfile
+    elif dockerhub_subscription in {"team", "business"}:
+        assert "\n  publish:\n" in taskfile
+        assert "id-token: write" in release_workflow
+        assert "uses: docker/login-action@v4" in release_workflow
+        assert "DOCKERHUB_OIDC_CONNECTIONID: ${{ vars.DOCKERHUB_OIDC_CONNECTIONID }}" in release_workflow
+        assert "username: ${{ vars.DOCKERHUB_ORGANIZATION }}" in release_workflow
+        assert "DOCKERHUB_PAT" not in release_workflow
+        assert "Docker Hub OIDC" in readme
+        assert "DOCKERHUB_PAT" not in readme
+    else:
+        assert "\n  publish:\n" in taskfile
+        assert "id-token: write" not in release_workflow
+        assert "uses: docker/login-action@v4" in release_workflow
+        assert "username: ${{ secrets.DOCKERHUB_USERNAME }}" in release_workflow
+        assert "password: ${{ secrets.DOCKERHUB_PAT }}" in release_workflow
+        assert "DOCKERHUB_OIDC_CONNECTIONID" not in release_workflow
+        assert "Docker Hub OIDC" not in readme
+        assert "DOCKERHUB_PAT" in readme
 
 
 @pytest.mark.integration

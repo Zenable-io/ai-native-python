@@ -2,6 +2,7 @@ allstar
 anchore
 buildx
 conftest
+connectionid
 cookiecutter
 dependabot
 digestabot

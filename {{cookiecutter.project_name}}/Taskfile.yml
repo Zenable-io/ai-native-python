@@ -257,7 +257,7 @@ tasks:
           as: tool
         cmd: '{{ '{{if eq .FORCE_LINK "true"}}' }}brew link --force {{ '{{.tool}}' }}{{ '{{else}}' }}true{{ '{{end}}' }}'
 
-{%- if cookiecutter.dockerhub == 'yes' %}
+{%- if cookiecutter.dockerhub_subscription != 'none' %}
 
   publish:
     desc: Publish the project artifacts; docker images, compiled binaries, etc.

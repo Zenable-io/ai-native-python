@@ -125,22 +125,21 @@ def write_context(*, context: dict) -> None:
         yaml.dump(context, file)
 
 
-def notify_dockerhub_secrets() -> None:
-    """Notify user about required Docker Hub secrets for releases."""
-    # We no longer need this once https://github.com/docker/roadmap/issues/314 is available
+def notify_dockerhub_configuration(*, use_oidc: bool) -> None:
+    """Notify user about the selected Docker Hub authentication configuration."""
     print("\n" + "=" * 70)
     print("IMPORTANT: Docker Hub Publishing Enabled")
     print("=" * 70)
-    print("\nYou have enabled Docker Hub publishing for releases")
-    print("Please ensure the following GitHub secrets are configured:")
-    print("\n  • DOCKERHUB_USERNAME - Your Docker Hub username")
-    print("  • DOCKERHUB_PAT - Your Docker Hub Personal Access Token")
-    print("\nWithout these secrets, your releases will fail during the")
-    print("Docker image publishing step")
-    print("\nTo add these secrets:")
-    print("1. Go to your GitHub repository settings")
-    print("2. Navigate to Settings → Secrets and variables → Actions")
-    print("3. Add the required secrets")
+    if use_oidc:
+        print("\nConfigure a Docker Hub OIDC connection for this GitHub repository.")
+        print("Then add these GitHub Actions variables:")
+        print("\n  • DOCKERHUB_ORGANIZATION - Your Docker Hub organization name")
+        print("  • DOCKERHUB_OIDC_CONNECTIONID - The Docker Hub OIDC connection ID")
+        print("\nReleases use short-lived Docker Hub tokens.")
+    else:
+        print("\nAdd these GitHub Actions secrets:")
+        print("\n  • DOCKERHUB_USERNAME - Your Docker Hub username")
+        print("  • DOCKERHUB_PAT - Your Docker Hub Personal Access Token")
     print("=" * 70 + "\n")
 
 
@@ -428,9 +427,10 @@ def run_post_gen_hook():
         # (i.e. check=False)
         subprocess.run(["task", "init"], check=False, capture_output=True)
 
-        # Notify about Docker Hub secrets if Docker Hub publishing is enabled
-        if cookiecutter_context.get("dockerhub") == "yes":
-            notify_dockerhub_secrets()
+        # Notify about Docker Hub authentication if publishing is enabled
+        dockerhub_subscription = cookiecutter_context.get("dockerhub_subscription")
+        if dockerhub_subscription != "none":
+            notify_dockerhub_configuration(use_oidc=dockerhub_subscription in {"team", "business"})
     except subprocess.CalledProcessError as error:
         stdout = error.stdout.decode("utf-8") if error.stdout else "No stdout"
         stderr = error.stderr.decode("utf-8") if error.stderr else "No stderr"

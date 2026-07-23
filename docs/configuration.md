@@ -27,12 +27,12 @@ When generating a new project, you'll be prompted for the following configuratio
 
 ### Technical Options
 
-| Variable         | Description                  | Default | Options                       |
-| ---------------- | ---------------------------- | ------- | ----------------------------- |
-| `python_version` | Minimum Python version       | "3.13"  | "3.11", "3.12", "3.13"        |
-| `dockerhub`      | Enable Docker Hub publishing | "no"    | "yes", "no"                   |
-| `public`         | Make repository public       | "yes"   | "yes", "no"                   |
-| `license`        | Project license              | "NONE"  | "NONE", "MIT", "BSD-3-Clause" |
+| Variable                 | Description                                         | Default | Options                                  |
+| ------------------------ | --------------------------------------------------- | ------- | ---------------------------------------- |
+| `python_version`         | Minimum Python version                              | "3.13"  | "3.11", "3.12", "3.13"                   |
+| `dockerhub_subscription` | Docker Hub plan; `none` disables image publishing   | "none"  | "none", "personal", "team", "business"   |
+| `public`                 | Make repository public                              | "yes"   | "yes", "no"                              |
+| `license`                | Project license                                     | "NONE"  | "NONE", "MIT", "BSD-3-Clause"            |
 
 ## Post-Generation Configuration
 
@@ -67,11 +67,14 @@ vars:
 
 For detailed information about pre-commit hooks configuration and available hooks, see the [Hooks Guide](hooks.md#pre-commit-hooks).
 
-#### Docker Hub Secrets
+#### Docker Hub Authentication
 
-If you enabled Docker Hub publishing:
+The `dockerhub_subscription` choice controls publishing and authentication:
 
-- `DOCKERHUB_USERNAME`
-- `DOCKERHUB_PAT`
+- **None:** Docker Hub publishing is not generated.
+- **Personal:** Add `DOCKERHUB_USERNAME` and `DOCKERHUB_PAT` as GitHub Actions secrets.
+- **Team or Business:** [Create a Docker Hub OIDC connection](https://docs.docker.com/enterprise/security/oidc-connections/create-manage/) whose ruleset grants the
+  generated repository write access. Add `DOCKERHUB_ORGANIZATION` and `DOCKERHUB_OIDC_CONNECTIONID` as GitHub Actions variables.
 
-A reminder to set this is also printed after project generation if you answered "yes" to the docker hub question.
+Personal subscriptions use the standard Docker Hub login. Team and Business subscriptions exchange the GitHub identity token for a short-lived Docker Hub token.
+The generated README and setup reminder describe only the selected authentication path.

@@ -28,6 +28,24 @@ PLATFORM=all task build
 ```
 
 You can also specify a single platform of either `linux/arm64` or `linux/amd64`
+{% if cookiecutter.dockerhub_subscription != 'none' %}
+## Docker Hub Publishing
+
+{% if cookiecutter.dockerhub_subscription in ['team', 'business'] %}
+Docker Hub OIDC requires a Team or Business subscription. Releases authenticate with short-lived tokens. [Create a Docker Hub OIDC
+connection](https://docs.docker.com/enterprise/security/oidc-connections/create-manage/) for this repository, then add these GitHub Actions variables:
+
+- `DOCKERHUB_ORGANIZATION`: Docker Hub organization name
+- `DOCKERHUB_OIDC_CONNECTIONID`: OIDC connection ID from Docker Hub
+
+The Docker Hub connection ruleset must allow this GitHub repository to write to the target image repository. Personal Docker Hub accounts are not supported.
+{% else %}
+Releases authenticate with Docker Hub credentials. Add these GitHub Actions secrets:
+
+- `DOCKERHUB_USERNAME`: Docker Hub username
+- `DOCKERHUB_PAT`: Docker Hub Personal Access Token
+{% endif %}
+{% endif %}
 
 ## Optional setup
 
