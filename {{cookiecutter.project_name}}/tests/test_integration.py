@@ -4,9 +4,9 @@ Integration tests for {{ cookiecutter.project_name }}
 """
 
 import json
-import tomllib
 import os
 import subprocess
+import tomllib
 from pathlib import Path
 
 import pytest
@@ -132,6 +132,7 @@ def test_docker_image():
         process = subprocess.run(
             ["docker", "run", "--rm", f"{image_name}:latest"],
             capture_output=True,
+            check=False,
             cwd=project_root,
         )
         assert process.returncode == 1, (
@@ -154,6 +155,7 @@ def test_docker_image():
         process = subprocess.run(
             command,
             capture_output=True,
+            check=False,
             cwd=project_root,
         )
         assert process.returncode == expected_exit, (

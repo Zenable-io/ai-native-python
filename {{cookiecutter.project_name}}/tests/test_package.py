@@ -6,15 +6,15 @@ Test package metadata and imports
 import pytest
 
 from {{ cookiecutter.project_slug }} import (
-    __maintainer__,
-    __project_name__,
-    __version__,
-{%- if cookiecutter.license != 'NONE' %}
-    __license__,
-{%- endif %}
 {%- if cookiecutter.license == 'NONE' %}
     __copyright__,
 {%- endif %}
+{%- if cookiecutter.license != 'NONE' %}
+    __license__,
+{%- endif %}
+    __maintainer__,
+    __project_name__,
+    __version__,
 )
 
 
