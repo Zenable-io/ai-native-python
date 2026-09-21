@@ -22,9 +22,8 @@ def test_main_function():
     """Test that main() raises NotImplementedError"""
     from main import main
 
-    with patch("sys.argv", ["main"]):
-        with pytest.raises(NotImplementedError):
-            main()
+    with patch("sys.argv", ["main"]), pytest.raises(NotImplementedError):
+        main()
 
 
 @pytest.mark.unit
@@ -46,6 +45,7 @@ def test_main_as_script():
     result = subprocess.run(
         [sys.executable, str(main_path)],
         capture_output=True,
+        check=False,
         text=True,
     )
 
@@ -62,6 +62,7 @@ def test_main_as_script_version():
     result = subprocess.run(
         [sys.executable, str(main_path), "--version"],
         capture_output=True,
+        check=True,
         text=True,
     )
 

@@ -11,7 +11,7 @@ match your organization's conventions and requirements.
 
 import sys
 from pathlib import Path
-from typing import Literal, Optional
+from typing import Literal
 
 import yaml
 from pydantic import (
@@ -82,10 +82,10 @@ class InfrastructureDependency(BaseModel):
             "search_engine",
         ]
     ]
-    local_runtime: Optional[Literal["compose", "process", "managed", "mock"]] = Field(
+    local_runtime: Literal["compose", "process", "managed", "mock"] | None = Field(
         None, description="How to accommodate the infrastructure locally"
     )
-    version: Optional[str] = Field(
+    version: str | None = Field(
         None, pattern=r"^(0|[1-9]\d*)\.(0|[1-9]\d*)(\.(0|[1-9]\d*))?$"
     )
 
@@ -94,7 +94,7 @@ class ServiceDependency(BaseModel):
     model_config = ConfigDict(strict=True)
 
     name: str
-    version: Optional[str] = Field(None, pattern=r"\b[0-9a-f]{40}\b")
+    version: str | None = Field(None, pattern=r"\b[0-9a-f]{40}\b")
 
 
 class DependsOnConfig(BaseModel):
@@ -137,7 +137,7 @@ class DevelopConfig(BaseModel):
     model_config = ConfigDict(strict=True)
 
     software: SoftwareConfig
-    depends_on: Optional[DependsOnConfig] = Field(
+    depends_on: DependsOnConfig | None = Field(
         default_factory=DependsOnConfig,
         description="The dependencies of this service during development",
     )
@@ -147,7 +147,7 @@ class PublishConfig(BaseModel):
     model_config = ConfigDict(strict=True)
 
     publish_type: Literal["docker", "oci", "archive", "package", "binary", "none"]
-    depends_on: Optional[DependsOnConfig] = Field(
+    depends_on: DependsOnConfig | None = Field(
         default_factory=DependsOnConfig,
         description="The dependencies of this service in order to build and publish",
     )
@@ -166,7 +166,7 @@ class DeployConfig(BaseModel):
         "ansible",
         "none",
     ]
-    depends_on: Optional[DependsOnConfig] = Field(
+    depends_on: DependsOnConfig | None = Field(
         default_factory=DependsOnConfig,
         description="The dependencies of this service in order to deploy",
     )
@@ -194,7 +194,7 @@ class OperationsScheduleConfig(BaseModel):
     uptime: Literal["continuous", "on_demand", "scheduled", "business_hours"] = Field(
         "continuous", description="The uptime expectations"
     )
-    days: Optional[
+    days: (
         list[
             Literal[
                 "Monday",
@@ -206,27 +206,28 @@ class OperationsScheduleConfig(BaseModel):
                 "Sunday",
             ]
         ]
-    ] = None
-    start: Optional[str] = None  # RFC3339 timestamp
-    end: Optional[str] = None  # RFC3339 timestamp
+        | None
+    ) = None
+    start: str | None = None  # RFC3339 timestamp
+    end: str | None = None  # RFC3339 timestamp
 
     @field_validator("days", "start", "end", mode="before")
     @classmethod
     def validate_scheduled_fields(cls, value, info):
-        if info.data.get("uptime") == "scheduled":
-            if not value:
-                raise ValueError(
-                    f'{info.field_name} must be specified if uptime is set to "scheduled"'
-                )
+        if info.data.get("uptime") == "scheduled" and not value:
+            raise ValueError(
+                f'{info.field_name} must be specified if uptime is set to "scheduled"'
+            )
         return value
 
     @model_validator(mode="after")
     def validate_no_extra_fields(self):
-        if self.uptime != "scheduled":
-            if self.days is not None or self.start is not None or self.end is not None:
-                raise ValueError(
-                    'days, start, and end should only be set if uptime is "scheduled"'
-                )
+        if self.uptime != "scheduled" and (
+            self.days is not None or self.start is not None or self.end is not None
+        ):
+            raise ValueError(
+                'days, start, and end should only be set if uptime is "scheduled"'
+            )
         return self
 
 
@@ -234,21 +235,21 @@ class RuntimeEnvironmentConfig(BaseModel):
     model_config = ConfigDict(strict=True)
 
     authorization: dict[Literal["public"], bool]
-    service_route_prefix: Optional[str] = Field(
+    service_route_prefix: str | None = Field(
         None,
         description="The service-specific route prefix, like data for /api/data/example and /api/data",
     )
-    stage_name: Optional[str] = Field(
+    stage_name: str | None = Field(
         None,
         description="The service-specific stage name, like current or v1; typically used for REST APIs",
     )
     uptime_sla: float = Field(95.0, description="The uptime agreement")
     uptime_slo: float = Field(99.0, description="The uptime objective")
-    operations_schedule: Optional[OperationsScheduleConfig] = Field(
+    operations_schedule: OperationsScheduleConfig | None = Field(
         default_factory=lambda: OperationsScheduleConfig(uptime="on_demand"),
         description="The operations schedule",
     )
-    depends_on: Optional[DependsOnConfig] = Field(
+    depends_on: DependsOnConfig | None = Field(
         default_factory=DependsOnConfig,
         description="Dependencies for the specific environment",
     )
@@ -347,11 +348,11 @@ class ServiceSchema(BaseModel):
     develop: DevelopConfig = Field(
         description="Context used when updating the service's software, tests, documentation, IaC, or other related information."
     )
-    publish: Optional[PublishConfig] = Field(
+    publish: PublishConfig | None = Field(
         None,
         description="Details regarding how and where artifacts are published, such as container images and in-toto attestations",
     )
-    deploy: Optional[DeployConfig] = Field(
+    deploy: DeployConfig | None = Field(
         None, description="Details regarding how and where to deploy a service"
     )
     runtime: RuntimeConfig = Field(
@@ -373,14 +374,15 @@ class ServiceSchema(BaseModel):
             "archived",
         ]
 
-        if self.deploy and self.deploy.environments:
-            if (
-                lifecycle in production_restricted_lifecycles
-                and "production" in self.deploy.environments
-            ):
-                raise ValueError(
-                    f"Service {self.name}'s lifecycle of '{lifecycle}' is not allowed to deploy to production."
-                )
+        if (
+            self.deploy
+            and self.deploy.environments
+            and lifecycle in production_restricted_lifecycles
+            and "production" in self.deploy.environments
+        ):
+            raise ValueError(
+                f"Service {self.name}'s lifecycle of '{lifecycle}' is not allowed to deploy to production."
+            )
         return self
 
 
@@ -407,8 +409,11 @@ def validate_service_definition(file_path: Path) -> bool:
             location = " -> ".join(str(loc) for loc in error["loc"])
             print(f"  - {location}: {error['msg']}")
         return False
-    except Exception as e:
-        print(f"Unexpected error: {e}")
+    except OSError as e:
+        print(f"Error reading {file_path}: {e}")
+        return False
+    except TypeError as e:
+        print(f"Error: {file_path} must contain a YAML mapping at the top level: {e}")
         return False
 
 
