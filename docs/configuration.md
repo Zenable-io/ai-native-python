@@ -73,7 +73,7 @@ The `dockerhub_subscription` choice controls publishing and authentication:
 
 - **None:** Docker Hub publishing is not generated.
 - **Personal:** Add `DOCKERHUB_USERNAME` and `DOCKERHUB_PAT` as GitHub Actions secrets.
-- **Team or Business:** [Create a Docker Hub OIDC connection](https://docs.docker.com/enterprise/security/oidc-connections/create-manage/) whose ruleset grants the
+- **Team or Business:** [Create a Docker Hub OIDC connection](https://docs.docker.com/enterprise/security/oidc-connections/) whose ruleset grants the
   generated repository write access. Add `DOCKERHUB_ORGANIZATION` and `DOCKERHUB_OIDC_CONNECTIONID` as GitHub Actions variables.
 
 Personal subscriptions use the standard Docker Hub login. Team and Business subscriptions exchange the GitHub identity token for a short-lived Docker Hub token.

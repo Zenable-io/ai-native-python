@@ -236,7 +236,7 @@ jobs:
           wsl -d Ubuntu-24.04 -u root -- bash -ec "
             apt-get update -qq
             apt-get install -y -qq curl ca-certificates >/dev/null
-            curl -fsSL https://get.docker.com | sh -s -- --quiet
+            curl -fsSL https://get.docker.com | sh >/dev/null
             service docker start
           "
 
