@@ -2,7 +2,7 @@
 exclude: '^{{cookiecutter\.project_name}}/.*'
 repos:
  - repo: https://github.com/astral-sh/ruff-pre-commit
-   rev: 2eeb5678de71a00c0902cbda7105d328432f72cb  # frozen: v0.16.8
+   rev: f368fb366ff7f2f808dd324b83a6d32267799e19  # frozen: v0.17.2
    hooks:
      - id: ruff-check
        types_or: [ python, pyi, jupyter ]
@@ -24,7 +24,7 @@ repos:
     - id: end-of-file-fixer
     - id: trailing-whitespace
  - repo: https://github.com/lycheeverse/lychee
-   rev: 4e065481e8571d0b270c5f4e2332b74cc8342758  # frozen: nightly
+   rev: 06f90b08225d739519535ef06434301b5a2504c6  # frozen: nightly
    hooks:
      - id: lychee-docker
        # Keep all other configs in the config file
@@ -40,7 +40,7 @@ repos:
      - id: shellcheck
        args: [ -x, --source-path=SCRIPTDIR ]
  - repo: https://github.com/trufflesecurity/trufflehog
-   rev: f714bf454f350590f4a24c3ddb1aef02c35bf5b6  # frozen: v3.97.5
+   rev: 31ce31ee1abbcc7dc8eee5764c17121c3044c8b2  # frozen: v3.99.7
    hooks:
      - id: trufflehog
        # Resolve the repo root via git-common-dir so this works in both normal repos and worktrees
@@ -53,7 +53,7 @@ repos:
    hooks:
     - id: openapi-spec-validator
  - repo: https://github.com/streetsidesoftware/cspell-cli
-   rev: 058f44e47719e80d8f1e597a235310b60e937860  # frozen: v10.2.0
+   rev: f6467e1f1ebecf5020560405c7b26e01786a43c8  # frozen: v10.4.0
    hooks:
      - id: cspell
        types: [markdown]
