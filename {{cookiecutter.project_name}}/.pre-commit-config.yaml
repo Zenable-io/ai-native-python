@@ -2,7 +2,7 @@
 exclude: '^{{ cookiecutter.project_name }}/.*'
 repos:
  - repo: https://github.com/astral-sh/ruff-pre-commit
-   rev: f368fb366ff7f2f808dd324b83a6d32267799e19  # frozen: v0.17.2
+   rev: 25bcf95026b96e2dd3c0aec3090c3d6ef6ca2e6c  # frozen: v0.17.3
    hooks:
      - id: ruff-check
        types_or: [ python, pyi, jupyter ]
@@ -24,7 +24,7 @@ repos:
     - id: end-of-file-fixer
     - id: trailing-whitespace
  - repo: https://github.com/lycheeverse/lychee
-   rev: 06f90b08225d739519535ef06434301b5a2504c6  # frozen: nightly
+   rev: d9d97b51e395bd72c6498e0c6c4943dcae7b410a  # frozen: nightly
    hooks:
      - id: lychee-docker
        # Keep all other configs in the config file
