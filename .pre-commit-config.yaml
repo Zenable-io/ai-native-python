@@ -2,7 +2,7 @@
 exclude: '^{{cookiecutter\.project_name}}/.*'
 repos:
  - repo: https://github.com/astral-sh/ruff-pre-commit
-   rev: f368fb366ff7f2f808dd324b83a6d32267799e19  # frozen: v0.17.2
+   rev: c0f278f1254ccc8fb09676bcdb8d847e7db493e5  # frozen: v0.17.4
    hooks:
      - id: ruff-check
        types_or: [ python, pyi, jupyter ]
@@ -24,7 +24,7 @@ repos:
     - id: end-of-file-fixer
     - id: trailing-whitespace
  - repo: https://github.com/lycheeverse/lychee
-   rev: 06f90b08225d739519535ef06434301b5a2504c6  # frozen: nightly
+   rev: 20d297ec5a20b5233d026726508f5b64cf7baa56  # frozen: nightly
    hooks:
      - id: lychee-docker
        # Keep all other configs in the config file
@@ -40,7 +40,7 @@ repos:
      - id: shellcheck
        args: [ -x, --source-path=SCRIPTDIR ]
  - repo: https://github.com/trufflesecurity/trufflehog
-   rev: 31ce31ee1abbcc7dc8eee5764c17121c3044c8b2  # frozen: v3.99.7
+   rev: ea68ca03c865c5f324e86e849ced20ed3cf9dbbb  # frozen: v3.99.8
    hooks:
      - id: trufflehog
        # Resolve the repo root via git-common-dir so this works in both normal repos and worktrees
